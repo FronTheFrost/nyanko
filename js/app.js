@@ -21,22 +21,29 @@ function calcStat(rawStat, level, levelCurve, treasureMultiplier = 2.5) {
 }
 
 async function init() {
+  const countEl = document.getElementById("resultCount");
   try {
+    countEl.textContent = "데이터 불러오는 중...";
+    // 절대경로/상대경로 모두 대응하도록 수정
     const res = await fetch("./data/units.json");
+    if (!res.ok) throw new Error(`HTTP 에러 (${res.status})`);
+    
     allUnits = await res.json();
     
+    if (!Array.isArray(allUnits) || allUnits.length === 0) {
+      throw new Error("JSON 내부 데이터가 비어있거나 형식이 잘못되었습니다.");
+    }
+
     initAutocomplete();
-    
-    // URL에 특정 유닛이 지정되어 있으면 곧바로 상세 페이지로 진입 (예: ?id=0 또는 해시)
     checkRoute();
     window.addEventListener("popstate", checkRoute);
 
   } catch (err) {
-    document.getElementById("resultCount").textContent = "units.json 로드 실패: " + err.message;
+    countEl.innerHTML = `<span style="color: #ef4444;">데이터 로드 실패: ${err.message}<br>(data/units.json 경로를 확인해주세요)</span>`;
+    console.error(err);
   }
 }
 
-// URL 상태를 감지하여 메인 화면을 보여줄지, 상세 페이지를 보여줄지 결정
 function checkRoute() {
   const params = new URLSearchParams(window.location.search);
   const unitIdParam = params.get("id");
@@ -64,7 +71,7 @@ function showDetailView(unitId, pushHistory = true) {
 
   currentUnitId = unitId;
   const formKeys = Object.keys(unit.forms);
-  currentFormKey = formKeys[0]; // 기본 1형태
+  currentFormKey = formKeys[0];
   currentLevel = 30;
 
   renderDetailContent();
@@ -78,7 +85,6 @@ function showDetailView(unitId, pushHistory = true) {
   }
 }
 
-// 필터링 및 렌더링
 function renderList() {
   const query = document.getElementById("searchInput").value.trim().toLowerCase();
   const rarity = document.getElementById("rarityFilter").value;
@@ -117,7 +123,7 @@ function renderList() {
     const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
     
     const traitsHtml = (form1.traits || [])
-      .map(t => `<span class="badge trait-${t}"><img src="assets/img/traits/${t}.png" class="icon-sm" onerror="this.style.display='none'"> ${TRAIT_MAP[t] || t}</span>`).join("");
+      .map(t => `<span class="badge"><img src="assets/img/traits/${t}.png" class="icon-sm" onerror="this.style.display='none'"> ${TRAIT_MAP[t] || t}</span>`).join("");
 
     return `
       <div class="unit-card" onclick="showDetailView(${unit.id})">
@@ -129,13 +135,12 @@ function renderList() {
           <img src="assets/img/${unit.id}/1.png" alt="${form1.name}" loading="lazy" onerror="this.style.display='none'" />
         </div>
         <div class="unit-name">${form1.name}</div>
-        <div class="card-traits">${traitsHtml || '<span class="badge">무속성/범용</span>'}</div>
+        <div class="card-traits">${traitsHtml || '<span class="badge">무속성</span>'}</div>
       </div>
     `;
   }).join("");
 }
 
-// 상세 페이지 내부 내용 렌더링
 function renderDetailContent() {
   const unit = allUnits.find(u => u.id === currentUnitId);
   if (!unit) return;
@@ -169,7 +174,7 @@ function renderDetailContent() {
     <div class="detail-header-flex">
       <img src="assets/img/${unit.id}/${currentFormKey}.png" alt="${form.name}" class="detail-unit-img" onerror="this.style.display='none'" />
       <div>
-        <h2>[No.${String(unit.id).padStart(3, "0")}] ${form.name} <small>(${form.rarity})</small></h2>
+        <h2>[No.${String(unit.id).padStart(3, "0")}] ${form.name} <small style="color:var(--text-muted); font-size:0.8rem;">(${form.rarity})</small></h2>
         <p class="desc">${form.description.replace(/\n/g, "<br>")}</p>
       </div>
     </div>
@@ -187,7 +192,7 @@ function renderDetailContent() {
       <tr><th>생산 코스트</th><td>${form.cost}원</td><th>재생산</th><td>${form.cooldownFrames}f (${cdSec}초)</td></tr>
     </table>
 
-    <h3>특수 능력</h3>
+    <h3 style="font-size:1rem; margin-top:24px;">특수 능력</h3>
     <ul class="ability-list">${abilitiesHtml}</ul>
   `;
 }
@@ -202,7 +207,6 @@ function updateLevel(val) {
   renderDetailContent();
 }
 
-// 자동완성 검색 로직
 function initAutocomplete() {
   const searchInput = document.getElementById("searchInput");
   const listContainer = document.getElementById("autocompleteList");
@@ -233,9 +237,8 @@ function initAutocomplete() {
         <div class="autocomplete-item" onclick="selectAutocomplete(${unit.id}, '${form1.name}')">
           <img src="assets/img/${unit.id}/1.png" onerror="this.style.display='none'" />
           <div>
-            <span class="ac-id">No.${String(unit.id).padStart(3, "0")}</span>
-            <span class="ac-name">${form1.name}</span>
-            <span class="ac-rarity">(${form1.rarity})</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">No.${String(unit.id).padStart(3, "0")}</span>
+            <div style="font-weight:600; font-size:0.9rem;">${form1.name}</div>
           </div>
         </div>
       `;
@@ -257,12 +260,11 @@ function selectAutocomplete(unitId, name) {
   showDetailView(unitId);
 }
 
-// 뒤로가기 버튼 이벤트 연결
 document.getElementById("backBtn").addEventListener("click", () => {
   showMainView();
 });
 
-["rarityFilter", "traitFilter", "abilityFilter"].forEach(id => {
+["searchInput", "rarityFilter", "traitFilter", "abilityFilter"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderList);
 });
 
