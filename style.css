@@ -70,3 +70,7 @@ h3{font-size:14px;margin:18px 0 6px;color:var(--ac)}
 .ic{display:flex;flex-wrap:wrap;gap:8px}.ib{border:2px solid transparent;border-radius:8px;padding:2px;text-align:center}.ib .pt{width:44px;height:44px}
 .ib.normal{border-color:#f5c518}.ib.ultra{border-color:#ff4d4d}.ib small{display:block;font-size:10px;color:var(--mu)}
 .tr{padding:8px}.trh{display:flex;align-items:center;gap:8px}.trh .tv{margin-left:auto}.pt.sm{width:36px;height:36px;flex:none}
+.hm{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:0 16px}
+.logo{font-size:46px;font-weight:900;letter-spacing:-.05em}.logo span{color:var(--ac)}
+.sf{flex:1;margin:0}.sf input{width:100%;border-radius:99px;padding:10px 18px;font-size:16px}.sf.big{flex:none;width:min(560px,100%)}.sf.big input{padding:14px 22px;font-size:17px}
+.tabs2{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.tabs2 a{padding:8px 15px;border:1px solid var(--line);border-radius:99px;color:var(--mu);font-size:14px}.tabs2 a:hover{color:var(--tx);border-color:var(--ac)}
