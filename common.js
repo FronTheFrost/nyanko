@@ -49,10 +49,11 @@ function derive(u,k,f,st){
 }
 function mkctx(G,EN,strOn){
   const has=x=>G.ab.some(a=>a.key===x),A=x=>G.ab.find(a=>a.key===x),cr=A('critical'),sv=A('savage_blow'),st=A('strengthen');
-  let m=1;const hit=G.tr.filter(t=>EN.has(t));
-  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3):has('strong')?(fr?1.8:1.5):1}
+  let m=1,r=1;const hit=G.tr.filter(t=>EN.has(t));
+  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3):has('strong')?(fr?1.8:1.5):1;r=has('insanely_tough')?(fr?1/7:1/6):has('resistant')?(fr?1/5:1/4):has('strong')?(fr?.4:.5):1}
   for(const[e,[,key,x]]of Object.entries(SP))if(EN.has(e)&&has(key))m*=x;
-  return{m,metal:EN.has('metal'),str:strOn&&st?1+st.boost_percent/100:1,cc:cr?cr.chance/100:0,sc:sv?sv.chance/100:0,sb:sv?sv.boost_percent/100:0}
+  if(EN.has('sage')&&has('sage_slayer'))r*=A('sage_slayer').received_damage_multiplier??1;
+  return{m,r,metal:EN.has('metal'),str:strOn&&st?1+st.boost_percent/100:1,cc:cr?cr.chance/100:0,sc:sv?sv.chance/100:0,sb:sv?sv.boost_percent/100:0}
 }
 function ehit(att,ap,adj,c){
   const b=att*c.m*c.str,norm=c.metal?1:b*(adj&&ap?1+c.sc*c.sb:1);
