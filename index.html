@@ -9,21 +9,21 @@
 <script>
 let U=[];
 const fill=(s,all,arr,lab)=>$(s).innerHTML=`<option value="">${all}</option>`+arr.map(v=>`<option value="${esc(v)}">${esc(lab?lab(v):v)}</option>`).join('');
-const top=u=>{const f=u.forms[lastK(u)];return[f,stats(f,f.maxBaseLevel||1,0)]};
+const topOf=u=>{const f=u.forms[lastK(u)];return[f,stats(f,f.maxBaseLevel||1,0)]};
 (async()=>{U=await load();if(!U)return;
   const F=U.flatMap(u=>Object.values(u.forms));
   fill('#rar','등급 전체',[...new Set(F.map(f=>f.rarity))]);
   fill('#trt','속성 전체',[...new Set(F.flatMap(f=>f.traits))],v=>TR[v]||v);
   fill('#abl','능력 전체',[...new Set(F.flatMap(f=>f.abilities.map(a=>a.label_ko)))].sort());
-  for(const i of['#q','#rar','#trt','#abl','#srt'])$(i).addEventListener('input',view);view()})();
+  for(const i of['#q','#rar','#trt','#abl','#srt'])$(i).addEventListener('input',view);view()})().catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
 function view(){
   const q=$('#q').value.trim().toLowerCase(),r=$('#rar').value,t=$('#trt').value,a=$('#abl').value,s=$('#srt').value;
   const L=U.filter(u=>{const F=Object.values(u.forms);
     return(!q||String(u.id)===q||F.some(f=>f.name.toLowerCase().includes(q)))&&(!r||F.some(f=>f.rarity===r))&&(!t||F.some(f=>f.traits.includes(t)))&&(!a||F.some(f=>f.abilities.some(x=>x.label_ko===a)))});
-  if(s!=='id'){const key=u=>{const[f,S]=top(u);return{hp:S.hp,atk:S.atk,dps:S.dps,rng:f.recognitionRange,cost:f.cost}[s]},m=new Map(L.map(u=>[u,key(u)]));
+  if(s!=='id'){const key=u=>{const[f,S]=topOf(u);return{hp:S.hp,atk:S.atk,dps:S.dps,rng:f.recognitionRange,cost:f.cost}[s]},m=new Map(L.map(u=>[u,key(u)]));
     L.sort((x,y)=>s==='cost'?m.get(x)-m.get(y):m.get(y)-m.get(x))}
   $('#cnt').textContent=`${L.length}종 · 기본 최대 레벨 기준`;
-  $('#grid').innerHTML=L.map(u=>{const[f,S]=top(u),k=lastK(u);
+  $('#grid').innerHTML=L.map(u=>{const[f,S]=topOf(u),k=lastK(u);
     return`<a class="c" href="unit.html?id=${u.id}"><div class="top"><div class="pt">${u.id}<img src="img/u/${u.id}/${k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(f.name)}</div><div class="id">#${String(u.id).padStart(3,'0')}</div></div></div></a>`}).join('')
 }
 </script></body></html>
