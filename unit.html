@@ -1,514 +1,115 @@
-<!doctype html>
-
-<html lang="ko">
-<head>
-<meta charset="utf-8">
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>냥코 도감</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header>
-<div class="bar">
-<a class="brand" href="index.html">냥코<span>도감</span></a>
-<a class="back" href="index.html">← 목록</a>
-</div>
-</header>
-<main>
-<p id="cnt">불러오는 중…</p>
-<div id="app"></div>
-</main>
+<title>냥코 도감</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div class="bar"><a class="brand" href="index.html">냥코<span>도감</span></a><a class="back" href="index.html">← 목록</a></div></header>
+<main><p id="cnt">불러오는 중…</p><div id="app"></div></main>
 <script src="common.js"></script>
 <script>
-let U,u,k,f,G,B,P,D,STR=false;
-let CR=true,SV=true;
-let ST={TN:false,TU:false,TL:{}};
-let CH;
-(async()=>{
-    U=await load();
-    if(!U)return;
-    const q=new URLSearchParams(location.search);
-    u=U.find(x=>x.id==q.get('id'));
-    if(!u){
-        $('#cnt').textContent='없는 유닛이에요.';
-        return;
-    }
-    $('#cnt').remove();
-    setForm(
-        u.forms[q.get('f')]?q.get('f'):lastK(u),
-        q.get('b'),
-        q.get('p')
-    );
-})();
-function setForm(key,b,p){
-    k=key;
-    f=u.forms[k];
-    const mb=f.maxBaseLevel||1;
-    const mp=f.maxPlusLevel||0;
-    B=Math.min(mb,Math.max(1,+b||mb));
-    P=Math.min(mp,Math.max(0,+p||0));
-    D=f.recognitionRange;
-    build();
-}
+let U,u,k,f,G,B,P,D,STR=false,CR=true,SV=true,ST={TN:false,TU:false,TL:{}},CH;
+(async()=>{U=await load();if(!U)return;
+  const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
+  if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
+  $('#cnt').remove();setForm(u.forms[q.get('f')]?q.get('f'):lastK(u),q.get('b'),q.get('p'))})();
+function setForm(key,b,p){k=key;f=u.forms[k];const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0;
+  B=Math.min(mb,Math.max(1,+b||mb));P=Math.min(mp,Math.max(0,+p||0));D=f.recognitionRange;build()}
 function build(){
-    const mb=f.maxBaseLevel||1;
-    const mp=f.maxPlusLevel||0;
-    const ev=f.evolution||{};
-    const tl=+k>=3?(u.talents||[]):[];
-    const hasU=tl.some(t=>t.kind==='ultra');
-    const mats=(ev.materials||[]).map(m=>
-        `<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`
-    ).join('');
-    const trow=t=>`
-        <div class="row tr"
-             data-k="${tkey(t)}"
-             data-u="${t.kind==='ultra'?1:0}">
-            <b>${esc(t.label)}</b>
-            ${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}
-            <span class="tv"></span>
-            <input type="range"
-                   min="0"
-                   max="${t.maxLevel}"
-                   value="${ST.TL[tkey(t)]??t.maxLevel}">
-        </div>
-    `;
-    document.title=`${f.name} · 냥코 도감`;
-    $('#app').innerHTML=`
-        <div class="tabs">
-            ${Object.keys(u.forms).map(x=>`
-                <button class="tab${x===k?' on':''}"
-                        data-k="${x}">
-                    ${esc(u.forms[x].name)}
-                </button>
-            `).join('')}
-        </div>
-        <div class="unit-head">
-            <img
-                class="unit-avatar"
-                src="img/u/${u.id}/${Number(k)-1}.png"
-                alt="${esc(f.name)}"
-                onerror="this.style.visibility='hidden'"
-            >
-            <div class="unit-info">
-                <h1>${esc(f.name)}</h1>
-                <small>#${u.id} · ${k}형태</small>
-            </div>
-        </div>
-        <div id="tg"></div>
-        <p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
-        <h3>레벨</h3>
-        <div class="lc">
-            <label>
-                기본 레벨 <b id="bv"></b>
-                <input type="range"
-                       id="bs"
-                       min="1"
-                       max="${mb}"
-                       value="${B}">
-            </label>
-            ${mp?`
-                <label>
-                    플러스 레벨 <b id="pv"></b>
-                    <input type="range"
-                           id="ps"
-                           min="0"
-                           max="${mp}"
-                           value="${P}">
-                </label>
-            `:''}
-        </div>
-        ${tl.length?`
-            <h3>본능</h3>
-            <div class="ml">
-                <label>
-                    <input type="checkbox"
-                           id="tn"
-                           ${ST.TN?'checked':''}>
-                    본능 적용
-                </label>
-                ${hasU?`
-                    <label>
-                        <input type="checkbox"
-                               id="tu"
-                               ${ST.TU?'checked':''}>
-                        초본능 적용
-                    </label>
-                `:''}
-            </div>
-            ${tl.map(trow).join('')}
-        `:''}
-        <div class="g" id="sg"></div>
-        <h3>DPS 계산기</h3>
-        <div class="dps-settings">
-            <label id="skl" hidden>
-                <input type="checkbox"
-                       id="sk"
-                       ${STR?'checked':''}>
-                공격력 업 발동
-                <span id="skt"></span>
-            </label>
-            <label id="crl" hidden>
-                <input type="checkbox"
-                       id="cr"
-                       ${CR?'checked':''}>
-                크리티컬 적용
-            </label>
-            <label id="svl" hidden>
-                <input type="checkbox"
-                       id="sv"
-                       ${SV?'checked':''}>
-                혼신의 일격 적용
-            </label>
-        </div>
-        <div class="ctl">
-            <label>
-                적 거리
-                <input type="number"
-                       id="dd"
-                       step="10"
-                       inputmode="numeric"
-                       value="${D}">
-            </label>
-        </div>
-        <div id="dr"></div>
-        <div id="chart"></div>
-        <p class="note">
-            그래프 왼쪽은 양수 거리, 오른쪽은 음수 거리입니다.
-            실제 타격 범위만 표시합니다.
-            크리티컬과 혼신의 일격은 각각 ON/OFF할 수 있습니다.
-            파동, 소파동, 열파, 소열파, 폭파는 상시 적용합니다.
-            보물은 최대(체력·공격력 ×2.5) 기준입니다.
-        </p>
-        <div id="ab"></div>
-        ${ev.xp||mats?`
-            <h3>진화</h3>
-            <div class="row">
-                ${ev.xp?`XP ${n(ev.xp)} `:''}
-                ${mats}
-            </div>
-        `:''}
-    `;
-    $('#bs').oninput=e=>{
-        B=+e.target.value;
-        update();
-    };
-    if(mp){
-        $('#ps').oninput=e=>{
-            P=+e.target.value;
-            update();
-        };
-    }
-    $('#dd').oninput=e=>{
-        D=e.target.value===''?0:Number(e.target.value);
-        if(!Number.isFinite(D))D=0;
-        mark();
-    };
-    $('#sk').onchange=e=>{
-        STR=e.target.checked;
-        update();
-    };
-    $('#cr').onchange=e=>{
-        CR=e.target.checked;
-        update();
-    };
-    $('#sv').onchange=e=>{
-        SV=e.target.checked;
-        update();
-    };
-    if($('#tn')){
-        $('#tn').onchange=e=>{
-            ST.TN=e.target.checked;
-            update();
-        };
-    }
-    if($('#tu')){
-        $('#tu').onchange=e=>{
-            ST.TU=e.target.checked;
-            update();
-        };
-    }
-    document.querySelectorAll('.tr input').forEach(i=>{
-        i.oninput=()=>{
-            ST.TL[i.closest('.tr').dataset.k]=+i.value;
-            update();
-        };
-    });
-    document.querySelectorAll('.tab').forEach(t=>{
-        t.onclick=()=>{
-            setForm(t.dataset.k,B,P);
-        };
-    });
-    update();
-}
-// 기존 common.js의 dps 계산을 확장.
-// 크리티컬/혼신은 별도 제어하고,
-// 파동/열파/폭파 계열은 항상 반영한다.
-function dps(f,G,S,d,adj,str){
-    const A=x=>G.ab.find(a=>a.key===x);
-    const cr=A('critical');
-    const sv=A('savage_blow');
-    const mh=A('multi_hit');
-    const st=A('strengthen');
-    const ah=mh?mh.ability_hits:null;
-    const cc=CR&&cr?cr.chance/100:0;
-    const sc=SV&&sv?sv.chance/100:0;
-    const sb=sv?sv.boost_percent/100:0;
-    const E=h=>
-        (!ah||ah.includes(h))
-        ?(1+cc)*(1+sc*sb)
-        :1;
-    let total=0;
-    for(const r of f.actualRanges){
-        if(d>=r.minimum&&d<=r.maximum){
-            total+=(S.hits[r.hit-1]||0)*E(r.hit);
-        }
-    }
-    S.hits.forEach((h,i)=>{
-        const hn=i+1;
-        if(!h||(ah&&!ah.includes(hn)))return;
-        const e=h*E(hn);
-        // 파동 / 소파동
-        for(const[key,m]of[
-            ['wave',1],
-            ['mini_wave',.2]
-        ]){
-            const a=A(key);
-            if(a&&d>-67.5&&d<=332.5+200*((a.level||1)-1)){
-                total+=e*m*a.chance/100;
-            }
-        }
-        // 열파 / 소열파
-        for(const[key,m]of[
-            ['surge',1],
-            ['mini_surge',.2]
-        ]){
-            const a=A(key);
-            if(!a)continue;
-            const lo=a.anchor;
-            const hi=a.anchor+a.span;
-            const cnt=Math.max(1,Math.round(a.span*4));
-            const pos=a.span>0
-                ?Math.max(0,Math.min(hi,d+250)-Math.max(lo,d-125))*4
-                :(lo>=d-125&&lo<d+250?1:0);
-            total+=e*m*(a.chance/100)*(a.level||1)*pos/cnt;
-        }
-        // 폭파
-        const x=A('explosion');
-        if(x){
-            const lo=x.anchor;
-            const hi=x.anchor+x.span;
-            const cnt=Math.max(1,Math.round(x.span*4));
-            const bw=x.band_widths;
-            const e0=bw[0]/2;
-            const e1=e0+bw[1];
-            const e2=e1+bw[2];
-            const ov=(a,b)=>Math.max(
-                0,
-                Math.min(hi,b)-Math.max(lo,a)
-            );
-            let w;
-            if(x.span>0){
-                w=[
-                    ov(d-e0,d+e0),
-                    ov(d-e1,d-e0)+ov(d+e0,d+e1),
-                    ov(d-e2,d-e1)+ov(d+e1,d+e2)
-                ].map(v=>v*4);
-            }else{
-                const q=Math.abs(d-lo);
-                w=[
-                    q<=e0?1:0,
-                    q>e0&&q<=e1?1:0,
-                    q>e1&&q<=e2?1:0
-                ];
-            }
-            const p=x.damage_bands_percent;
-            total+=e*(x.chance/100)*
-                (w[0]*p[0]+w[1]*p[1]+w[2]*p[2])/100/cnt;
-        }
-    });
-    if(str&&st){
-        total*=1+st.boost_percent/100;
-    }
-    return total/(G.cyc/(f.fps||30));
+  const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,ev=f.evolution||{},tl=+k>=3?(u.talents||[]):[],hasU=tl.some(t=>t.kind==='ultra');
+  const mats=(ev.materials||[]).map(m=>`<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`).join('');
+  const trow=t=>`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`;
+  document.title=`${f.name} · 냥코 도감`;
+  $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
+<h1>#${u.id} ${esc(f.name)}</h1><div id="tg"></div>
+<p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
+<h3>레벨</h3><div class="lc"><label>기본 레벨 <b id="bv"></b><input type="range" id="bs" min="1" max="${mb}" value="${B}"></label>
+${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
+${tl.length?`<h3>본능</h3><div class="ml"><label><input type="checkbox" id="tn" ${ST.TN?'checked':''}> 본능 적용</label>${hasU?`<label><input type="checkbox" id="tu" ${ST.TU?'checked':''}> 초본능 적용</label>`:''}</div>${tl.map(trow).join('')}`:''}
+<div class="g" id="sg"></div>
+<h3>DPS 계산기</h3>
+<div class="ctl"><label>적 거리 <input type="number" id="dd" step="10" inputmode="numeric" value="${D}"></label>
+<label id="skl" hidden><input type="checkbox" id="sk" ${STR?'checked':''}> 공격력 업 발동 <span id="skt"></span></label></div>
+<div class="ctl" id="prob"></div>
+<div id="dr"></div><div id="chart"></div>
+<p class="note">그래프를 누르거나 끌어서 거리를 바꿀 수 있어요. 보물은 전부 최대(체력·공격력 ×2.5)로 계산하고, 파동·소파동·열파·소열파·폭파는 항상 적용해요. 크리티컬과 혼신의 일격은 보유 능력에 한해 ON/OFF 할 수 있어요. 점선은 크리티컬과 혼신의 일격을 제외한 DPS예요.</p>
+<div id="ab"></div>${ev.xp||mats?`<h3>진화</h3><div class="row">${ev.xp?`XP ${n(ev.xp)} `:''}${mats}</div>`:''}`;
+  $('#bs').oninput=e=>{B=+e.target.value;update()};
+  if(mp)$('#ps').oninput=e=>{P=+e.target.value;update()};
+  $('#dd').oninput=e=>{D=+e.target.value||0;mark()};
+  if($('#tn'))$('#tn').onchange=e=>{ST.TN=e.target.checked;update()};
+  if($('#tu'))$('#tu').onchange=e=>{ST.TU=e.target.checked;update()};
+  document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setForm(t.dataset.k,B,P));
+  update()
 }
 function update(){
-    G=derive(u,k,f,ST);
-    const S=stats(f,B,P,G);
-    const mb=f.maxBaseLevel||1;
-    const mp=f.maxPlusLevel||0;
-    const A=x=>G.ab.find(a=>a.key===x);
-    const fp=f.fps||30;
-    const kv=(l,v)=>`
-        <div class="kv">
-            <small>${l}</small>
-            <b>${v}</b>
-        </div>
-    `;
-    const h=S.hits.filter(x=>x>0);
-    $('#bv').textContent=`${B} / ${mb}`;
-    if(mp)$('#pv').textContent=`+${P} / ${mp}`;
-    $('#tg').innerHTML=
-        `<span class="tag r">${esc(f.rarity)}</span>`+
-        G.tr.map(t=>
-            `<span class="tag">${esc(TR[t]||t)}</span>`
-        ).join('');
-    $('#sg').innerHTML=
-        kv('체력',n(S.hp))+
-        kv('공격력',
-            n(S.atk)+
-            (h.length>1?
-            ` <small style="display:inline">(${h.join('+')})</small>`:'')
-        )+
-        kv('공격 주기',(G.cyc/fp).toFixed(2)+'초')+
-        kv('인식 사거리',f.recognitionRange)+
-        kv('이동속도',G.spd)+
-        kv('넉백',f.knockbacks+'회')+
-        kv('코스트',n(G.cost))+
-        kv('재생산',(G.cd/fp).toFixed(2)+'초');
-    const st=A('strengthen');
-    const cr=A('critical');
-    const sv=A('savage_blow');
-    $('#skl').hidden=!st;
-    $('#crl').hidden=!cr;
-    $('#svl').hidden=!sv;
-    if(st){
-        $('#skt').textContent=
-            `(체력 ${st.threshold_percent}% 이하)`;
-    }
-    $('#ab').innerHTML=G.ab.length?
-        `<h3>능력</h3>`+
-        G.ab.map(a=>
-            `<div class="row">${abil(a)}</div>`
-        ).join(''):'';
-    document.querySelectorAll('.tr').forEach(r=>{
-        const on=r.dataset.u==='1'?ST.TU:ST.TN;
-        const i=r.querySelector('input');
-        r.classList.toggle('off',!on);
-        r.querySelector('.tv').textContent=
-            `Lv ${i.value} / ${i.max}`;
-    });
-    $('#chart').innerHTML=chart(S);
-    mark();
-    history.replaceState(
-        null,
-        '',
-        `?id=${u.id}&f=${k}&b=${B}&p=${P}`
-    );
+  G=derive(u,k,f,ST);const S=stats(f,B,P,G),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
+  const kv=(l,v)=>`<div class="kv"><small>${l}</small><b>${v}</b></div>`,h=S.hits.filter(x=>x>0);
+  $('#bv').textContent=`${B} / ${mb}`;if(mp)$('#pv').textContent=`+${P} / ${mp}`;
+  $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`+G.tr.map(t=>`<span class="tag">${esc(TR[t]||t)}</span>`).join('');
+  $('#sg').innerHTML=kv('체력',n(S.hp))+kv('공격력',n(S.atk)+(h.length>1?` <small style="display:inline">(${h.join('+')})</small>`:''))+kv('공격 주기',(G.cyc/fp).toFixed(2)+'초')+kv('인식 사거리',f.recognitionRange)+kv('이동속도',G.spd)+kv('넉백',f.knockbacks+'회')+kv('코스트',n(G.cost))+kv('재생산',(G.cd/fp).toFixed(2)+'초');
+  const st=A('strengthen'),cr=A('critical'),sv=A('savage_blow');
+  $('#skl').hidden=!st;
+  if(st){
+    $('#skt').textContent=`(체력 ${st.threshold_percent}% 이하)`;
+    $('#sk').checked=STR;
+    $('#sk').onchange=e=>{STR=e.target.checked;refreshChart()};
+  }
+  let prob='';
+  if(cr)prob+=`<label><input type="checkbox" id="cr" ${CR?'checked':''}> 크리티컬 적용</label>`;
+  if(sv)prob+=`<label><input type="checkbox" id="sv" ${SV?'checked':''}> 혼신의 일격 적용</label>`;
+  $('#prob').innerHTML=prob;
+  if(cr)$('#cr').onchange=e=>{CR=e.target.checked;refreshChart()};
+  if(sv)$('#sv').onchange=e=>{SV=e.target.checked;refreshChart()};
+  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3>`+G.ab.map(a=>`<div class="row">${abil(a)}</div>`).join(''):'';
+  document.querySelectorAll('.tr').forEach(r=>{const on=r.dataset.u==='1'?ST.TU:ST.TN,i=r.querySelector('input');
+    r.classList.toggle('off',!on);r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
+  refreshChart();
+  history.replaceState(null,'',`?id=${u.id}&f=${k}&b=${B}&p=${P}`)
 }
-// 실제 타격 범위만 표시
-// 양수 왼쪽, 음수 오른쪽
+function refreshChart(){
+  const S=stats(f,B,P,G);
+  $('#chart').innerHTML=chart(S);mark()
+}
 function chart(S){
-    const W=600,H=220;
-    const L=48,R=10,T=12,Bm=26;
-    const ranges=f.actualRanges;
-    const minD=Math.min(...ranges.map(r=>r.minimum));
-    const maxD=Math.max(...ranges.map(r=>r.maximum));
-    const span=Math.max(1,maxD-minD);
-    const N=Math.min(600,Math.max(100,Math.ceil(span)));
-    const pts=[];
-    for(let i=0;i<=N;i++){
-        const d=maxD-span*i/N;
-        pts.push([
-            d,
-            dps(f,G,S,d,true,STR),
-            dps(f,G,S,d,false,STR)
-        ]);
-    }
-    // 그래프 위쪽 여백 확보
-    const maxValue=Math.max(1,...pts.map(p=>p[1]));
-    const M=maxValue*1.3;
-    const sx=d=>L+(maxD-d)/span*(W-L-R);
-    const sy=v=>T+(1-v/M)*(H-T-Bm);
-    CH={S,minD,maxD,sx,sy,W,L,R,T,Bm};
-    const path=i=>pts.map((p,j)=>
-        (j?'L':'M')+
-        sx(p[0]).toFixed(1)+' '+
-        sy(p[i]).toFixed(1)
-    ).join('');
-    let gr='';
-    // 거리 눈금
-    for(let i=0;i<=6;i++){
-        const d=maxD-span*i/6;
-        gr+=`
-            <line
-                x1="${sx(d)}"
-                x2="${sx(d)}"
-                y1="${T}"
-                y2="${H-Bm}"
-            />
-            <text
-                x="${sx(d)}"
-                y="${H-8}"
-                text-anchor="middle"
-            >${d>0?'+':''}${Math.round(d)}</text>
-        `;
-    }
-    // DPS 눈금
-    for(let i=0;i<=4;i++){
-        const v=M*i/4;
-        gr+=`
-            <line
-                x1="${L}"
-                x2="${W-R}"
-                y1="${sy(v)}"
-                y2="${sy(v)}"
-            />
-            <text
-                x="${L-5}"
-                y="${sy(v)+4}"
-                text-anchor="end"
-            >${n(v)}</text>
-        `;
-    }
-    const diff=pts.some(p=>Math.abs(p[1]-p[2])>.5);
-    return`
-        <svg id="svg" class="ch" viewBox="0 0 ${W} ${H}">
-            <g class="gr">${gr}</g>
-            <path
-                class="ar"
-                d="${path(1)}
-                L${sx(minD)} ${sy(0)}
-                L${sx(maxD)} ${sy(0)}Z"
-            />
-            ${diff?`<path class="ls" d="${path(2)}"/>`:''}
-            <path class="ln" d="${path(1)}"/>
-            <line id="mk" class="mk"
-                  y1="${T}" y2="${H-Bm}"/>
-            <circle id="dot" class="dot" r="4"/>
-        </svg>
-    `;
+  const W=600,H=220,L=48,R=10,T=12,Bm=26;
+  const ranges=f.actualRanges||[];
+  let minD=Math.min(-100,...ranges.map(r=>r.minimum));
+  let maxD=rangeX(f,G);
+  if(!Number.isFinite(minD))minD=-100;
+  if(!Number.isFinite(maxD)||maxD<=minD)maxD=100;
+  const X=maxD-minD,N=Math.min(300,Math.max(2,Math.ceil(X)));
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const d=maxD-X*i/N;
+    pts.push([d,dps(f,G,S,d,true,STR,CR,SV),dps(f,G,S,d,false,STR,CR,SV)]);
+  }
+  const M=Math.max(1,...pts.map(p=>p[1]))*1.25;
+  const sx=d=>L+(maxD-d)/X*(W-L-R),sy=v=>T+(1-v/M)*(H-T-Bm);
+  CH={S,minD,maxD,sx,sy,W,L,R};
+  const path=i=>pts.map((p,j)=>(j?'L':'M')+sx(p[0]).toFixed(1)+' '+sy(p[i]).toFixed(1)).join('');
+  let gr='';
+  for(let i=0;i<=4;i++){
+    const v=M*i/4;
+    gr+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text x="${L-5}" y="${sy(v)+4}" text-anchor="end">${n(v)}</text>`;
+  }
+  for(let i=0;i<=4;i++){
+    const d=maxD-X*i/4;
+    gr+=`<text x="${sx(d)}" y="${H-8}" text-anchor="middle">${Math.round(d)}</text>`;
+  }
+  const diff=pts.some(p=>Math.abs(p[1]-p[2])>.5);
+  return`<svg id="svg" class="ch" viewBox="0 0 ${W} ${H}"><g class="gr">${gr}</g><path class="ar" d="${path(1)}L${sx(minD)} ${sy(0)}L${sx(maxD)} ${sy(0)}Z"/>${diff?`<path class="ls" d="${path(2)}"/>`:''}<path class="ln" d="${path(1)}"/><line id="mk" class="mk" y1="${T}" y2="${H-Bm}"/><circle id="dot" class="dot" r="4"/></svg>`
 }
 function mark(){
-    if(!CH)return;
-    const a=dps(f,G,CH.S,D,true,STR);
-    const b=dps(f,G,CH.S,D,false,STR);
-    const x=CH.sx(
-        Math.max(CH.minD,Math.min(CH.maxD,D))
-    );
-    $('#mk').setAttribute('x1',x);
-    $('#mk').setAttribute('x2',x);
-    $('#dot').setAttribute('cx',x);
-    $('#dot').setAttribute('cy',CH.sy(a));
-    $('#dr').innerHTML=
-        `거리 ${D>0?'+':''}${D}에서 <b>${n(a)}</b> DPS`+
-        (Math.abs(a-b)>.5?
-        ` <i>(확률 효과 제외 ${n(b)})</i>`:'');
+  if(!CH)return;
+  const a=dps(f,G,CH.S,D,true,STR,CR,SV),b=dps(f,G,CH.S,D,false,STR,CR,SV);
+  const x=CH.sx(Math.min(CH.maxD,Math.max(CH.minD,D)));
+  $('#mk').setAttribute('x1',x);$('#mk').setAttribute('x2',x);
+  $('#dot').setAttribute('cx',x);$('#dot').setAttribute('cy',CH.sy(a));
+  $('#dr').innerHTML=`거리 ${D}에서 <b>${n(a)}</b> DPS`+(Math.abs(a-b)>.5?` <i>(확률 효과 제외 ${n(b)})</i>`:'')
 }
-const pick=e=>{
-    const s=e.target.closest('#svg');
-    if(!s)return;
-    if(e.type==='pointermove'&&!e.buttons)return;
-    const r=s.getBoundingClientRect();
-    const vx=(e.clientX-r.left)/r.width*CH.W;
-    const ratio=(vx-CH.L)/(CH.W-CH.L-CH.R);
-    D=Math.round(
-        CH.maxD-(CH.maxD-CH.minD)*ratio
-    );
-    $('#dd').value=D;
-    mark();
-};
-$('#app').addEventListener('pointerdown',pick);
-$('#app').addEventListener('pointermove',pick);
-</script>
-</body>
-</html>
+const pick=e=>{const s=e.target.closest('#svg');if(!s||(e.type==='pointermove'&&!e.buttons))return;
+  const r=s.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*CH.W;
+  const ratio=Math.min(1,Math.max(0,(vx-CH.L)/(CH.W-CH.L-CH.R)));
+  D=Math.round(CH.maxD-ratio*(CH.maxD-CH.minD));
+  $('#dd').value=D;mark()};
+$('#app').addEventListener('pointerdown',pick);$('#app').addEventListener('pointermove',pick);
+</script></body></html>
