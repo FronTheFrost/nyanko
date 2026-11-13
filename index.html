@@ -1,29 +1,22 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>냥코 도감</title><link rel="stylesheet" href="style.css"></head><body>
-<header><div class="bar"><a class="brand" href="index.html">냥코<span>도감</span></a><input id="q" type="search" placeholder="이름 검색" autocomplete="off"></div>
-<div class="fl"><select id="rar"></select><select id="trt"></select><select id="abl"></select>
-<select id="srt"><option value="id">번호순</option><option value="hp">체력순</option><option value="atk">공격력순</option><option value="dps">DPS순</option><option value="rng">사거리순</option><option value="cost">코스트 낮은순</option></select></div></header>
-<main><p id="cnt">불러오는 중…</p><div id="grid"></div></main>
+<title>냥코연구소</title><link rel="stylesheet" href="style.css"></head><body>
+<main id="main"></main>
 <script src="common.js"></script>
 <script>
-let U=[];
-const fill=(s,all,arr,lab)=>$(s).innerHTML=`<option value="">${all}</option>`+arr.map(v=>`<option value="${esc(v)}">${esc(lab?lab(v):v)}</option>`).join('');
-const topOf=u=>{const f=u.forms[lastK(u)];return[f,stats(f,f.maxBaseLevel||1,0)]};
-(async()=>{U=await load();if(!U)return;
-  const F=U.flatMap(u=>Object.values(u.forms));
-  fill('#rar','등급 전체',[...new Set(F.map(f=>f.rarity))]);
-  fill('#trt','속성 전체',[...new Set(F.flatMap(f=>f.traits))],v=>TR[v]||v);
-  fill('#abl','능력 전체',[...new Set(F.flatMap(f=>f.abilities.map(a=>a.label_ko)))].sort());
-  for(const i of['#q','#rar','#trt','#abl','#srt'])$(i).addEventListener('input',view);view()})().catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
-function view(){
-  const q=$('#q').value.trim().toLowerCase(),r=$('#rar').value,t=$('#trt').value,a=$('#abl').value,s=$('#srt').value;
-  const L=U.filter(u=>{const F=Object.values(u.forms);
-    return(!q||String(u.id)===q||F.some(f=>f.name.toLowerCase().includes(q)))&&(!r||F.some(f=>f.rarity===r))&&(!t||F.some(f=>f.traits.includes(t)))&&(!a||F.some(f=>f.abilities.some(x=>x.label_ko===a)))});
-  if(s!=='id'){const key=u=>{const[f,S]=topOf(u);return{hp:S.hp,atk:S.atk,dps:S.dps,rng:f.recognitionRange,cost:f.cost}[s]},m=new Map(L.map(u=>[u,key(u)]));
-    L.sort((x,y)=>s==='cost'?m.get(x)-m.get(y):m.get(y)-m.get(x))}
-  $('#cnt').textContent=`${L.length}종 · 기본 최대 레벨 기준`;
-  $('#grid').innerHTML=L.map(u=>{const[f,S]=topOf(u),k=lastK(u);
-    return`<a class="c" href="unit.html?id=${u.id}"><div class="top"><div class="pt">${u.id}<img src="img/u/${u.id}/${k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(f.name)}</div><div class="id">#${String(u.id).padStart(3,'0')}</div></div></div></a>`}).join('')
-}
+const TABS=[['티어표','tier.html'],['육성','growth.html'],['범용덱','deck.html'],['기타순위표','ranking.html'],['리뷰','review.html']];
+const pad=id=>String(id).padStart(3,'0');
+const card=u=>{const k=lastK(u),f=u.forms[k];return`<a class="c" href="unit.html?id=${u.id}"><div class="top"><div class="pt">${u.id}<img src="img/u/${u.id}/${k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(f.name)}</div><div class="id">#${pad(u.id)}</div></div></div></a>`};
+(async()=>{
+  const q0=new URLSearchParams(location.search).get('q');
+  if(q0===null){
+    $('#main').innerHTML=`<div class="hm"><div class="logo">냥코<span>연구소</span></div><form class="sf big" action="index.html"><input name="q" type="search" placeholder="유닛 이름 검색" autocomplete="off" autofocus></form><nav class="tabs2">${TABS.map(([l,h])=>`<a href="${h}">${l}</a>`).join('')}</nav></div>`;return}
+  document.body.insertAdjacentHTML('afterbegin',header(q0));
+  $('#main').innerHTML='<p id="cnt">불러오는 중…</p><div id="grid"></div>';
+  const U=await load();if(!U)return;
+  const show=q=>{q=q.trim().toLowerCase();const L=U.filter(u=>!q||String(u.id)===q||pad(u.id)===q||Object.values(u.forms).some(f=>f.name.toLowerCase().includes(q)));
+    $('#cnt').textContent=`${L.length}종`;$('#grid').innerHTML=L.map(card).join('')};
+  show(q0);
+  $('.sf input').addEventListener('input',e=>{show(e.target.value);history.replaceState(null,'','?q='+encodeURIComponent(e.target.value))});
+})().catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
 </script></body></html>
