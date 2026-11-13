@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestnyanko DB - 냥코대전쟁 유닛 데이터베이스</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>Bestnyanko 유닛 DB</h1>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="유닛 이름, ID, 설명 검색..." />
+      <select id="rarityFilter">
+        <option value="ALL">전체 등급</option>
+        <option value="기본">기본</option>
+        <option value="EX">EX</option>
+        <option value="레어">레어</option>
+        <option value="슈퍼 레어">슈퍼 레어</option>
+        <option value="울트라 슈퍼 레어">울트라 슈퍼 레어</option>
+        <option value="레전드 레어">레전드 레어</option>
+      </select>
+      <select id="traitFilter">
+        <option value="ALL">전체 속성</option>
+        <option value="red">빨간 적</option>
+        <option value="floating">떠있는 적</option>
+        <option value="black">검은 적</option>
+        <option value="metal">메탈 적</option>
+        <option value="angel">천사</option>
+        <option value="alien">에이리언</option>
+        <option value="zombie">좀비</option>
+        <option value="relic">고대종</option>
+        <option value="aku">악마</option>
+        <option value="traitless">무속성</option>
+      </select>
+      <select id="abilityFilter">
+        <option value="ALL">전체 능력</option>
+        <option value="area">범위 공격</option>
+        <option value="single">개체 공격</option>
+        <option value="long_distance">원거리 공격</option>
+        <option value="strong">엄청 강하다</option>
+        <option value="massive_damage">초 데미지</option>
+        <option value="resistant">맷집이 좋다</option>
+        <option value="freeze">움직임을 멈춘다</option>
+        <option value="slow">움직임을 느리게 한다</option>
+        <option value="knockback">날려버린다</option>
+        <option value="weaken">공격력 다운</option>
+        <option value="critical">크리티컬</option>
+        <option value="wave_blocker">파동 스토퍼</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <div id="resultCount" class="result-count">데이터 불러오는 중...</div>
+    <div id="unitGrid" class="unit-grid"></div>
+  </main>
+
+  <!-- 유닛 상세 모달 -->
+  <div id="unitModal" class="modal hidden">
+    <div class="modal-content">
+      <button id="closeModal" class="close-btn">&times;</button>
+      <div id="formTabs" class="form-tabs"></div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
