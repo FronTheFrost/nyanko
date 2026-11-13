@@ -11,7 +11,7 @@ const pad=id=>String(id).padStart(3,'0'),img=(src,t)=>`<div class="pt">${t}<img 
 (async()=>{U=await load();if(!U)return;
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
   if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
-  $('#cnt').remove();setForm(u.forms[q.get('f')]?q.get('f'):lastK(u),q.get('b'),q.get('p'))})();
+  $('#cnt').remove();setForm(u.forms[q.get('f')]?q.get('f'):lastK(u),q.get('b'),q.get('p'))})().catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
 function setForm(key,b,p){k=key;f=u.forms[k];const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0;
   B=Math.min(mb,Math.max(1,+b||mb));P=Math.min(mp,Math.max(0,+p||0));D=f.recognitionRange;build()}
 function build(){
