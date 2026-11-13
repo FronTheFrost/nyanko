@@ -65,5 +65,3 @@ function dps(f,G,S,d,adj,str){
   if(str&&st)t*=1+st.boost_percent/100;
   return t/(G.cyc/(f.fps||30))
 }
-
-자 여기.
