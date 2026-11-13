@@ -9,7 +9,6 @@ const TRAIT_MAP = {
   aku: "악마", traitless: "무속성"
 };
 
-// 냥코대전쟁 공식 레벨 배율 계산 (미래편/우주편 보물 2.5배 기준)
 function calcStat(rawStat, level, levelCurve, treasureMultiplier = 2.5) {
   let mult = 1.0;
   let remaining = level - 1;
@@ -21,18 +20,18 @@ function calcStat(rawStat, level, levelCurve, treasureMultiplier = 2.5) {
   return Math.round(Math.round(rawStat * mult) * treasureMultiplier);
 }
 
-// JSON 로드
 async function init() {
   try {
     const res = await fetch("./data/units.json");
     allUnits = await res.json();
     renderList();
+    initAutocomplete();
   } catch (err) {
     document.getElementById("resultCount").textContent = "units.json 로드 실패: " + err.message;
   }
 }
 
-// 검색 및 필터링
+// 필터링 및 렌더링 (기본적으로 1진 형태 기준 표시)
 function renderList() {
   const query = document.getElementById("searchInput").value.trim().toLowerCase();
   const rarity = document.getElementById("rarityFilter").value;
@@ -40,26 +39,22 @@ function renderList() {
   const ability = document.getElementById("abilityFilter").value;
 
   const filtered = allUnits.filter(unit => {
+    const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
     const forms = Object.values(unit.forms);
-    const highestForm = forms[forms.length - 1];
 
-    // 등급 필터
-    if (rarity !== "ALL" && highestForm.rarity !== rarity) return false;
+    if (rarity !== "ALL" && form1.rarity !== rarity) return false;
 
-    // 이름/ID 검색 (1~4진 이름 모두 검색)
     if (query) {
       const matchId = String(unit.id) === query;
       const matchName = forms.some(f => f.name.toLowerCase().includes(query));
       if (!matchId && !matchName) return false;
     }
 
-    // 속성 필터 (모든 진화 형태 중 하나라도 해당하면 통과)
     if (trait !== "ALL") {
       const hasTrait = forms.some(f => f.traits && f.traits.includes(trait));
       if (!hasTrait) return false;
     }
 
-    // 능력 필터
     if (ability !== "ALL") {
       const hasAbility = forms.some(f => f.abilities && f.abilities.some(a => a.key === ability));
       if (!hasAbility) return false;
@@ -71,34 +66,94 @@ function renderList() {
   document.getElementById("resultCount").textContent = `검색 결과: ${filtered.length}개 유닛`;
 
   const grid = document.getElementById("unitGrid");
-  // 렌더링 성능 보호를 위해 상위 120개 우선 표시 (필요 시 더보기 구현)
-  grid.innerHTML = filtered.slice(0, 120).map(unit => {
-    const formKeys = Object.keys(unit.forms);
-    const latest = unit.forms[formKeys[formKeys.length - 1]];
-    const traitsHtml = (latest.traits || [])
-      .map(t => `<span class="badge trait-${t}">${TRAIT_MAP[t] || t}</span>`).join("");
+  grid.innerHTML = filtered.slice(0, 100).map(unit => {
+    const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
+    
+    // 속성 아이콘 + 텍스트 렌더링
+    const traitsHtml = (form1.traits || [])
+      .map(t => `<span class="badge trait-${t}"><img src="assets/img/traits/${t}.png" class="icon-sm" onerror="this.style.display='none'"> ${TRAIT_MAP[t] || t}</span>`).join("");
 
     return `
       <div class="unit-card" onclick="openUnitModal(${unit.id})">
         <div class="card-top">
           <span class="unit-id">No.${String(unit.id).padStart(3, "0")}</span>
-          <span class="unit-rarity">${latest.rarity}</span>
+          <span class="unit-rarity">${form1.rarity}</span>
         </div>
-        <div class="unit-name">${latest.name}</div>
-        <div class="unit-sub">1진: ${unit.forms["1"].name}</div>
+        <div class="unit-img-wrap">
+          <!-- 폴더 구조: assets/img/캐릭터ID/1.png -->
+          <img src="assets/img/${unit.id}/1.png" alt="${form1.name}" loading="lazy" onerror="this.style.display='none'" />
+        </div>
+        <div class="unit-name">${form1.name}</div>
         <div class="card-traits">${traitsHtml || '<span class="badge">무속성/범용</span>'}</div>
       </div>
     `;
   }).join("");
 }
 
-// 상세 모달 열기
+// 실시간 자동완성 검색 드롭다운 로직
+function initAutocomplete() {
+  const searchInput = document.getElementById("searchInput");
+  const listContainer = document.getElementById("autocompleteList");
+
+  searchInput.addEventListener("input", (e) => {
+    const keyword = e.target.value.trim().toLowerCase();
+    renderList(); // 메인 리스트도 필터링
+
+    if (!keyword) {
+      listContainer.classList.add("hidden");
+      listContainer.innerHTML = "";
+      return;
+    }
+
+    const matched = allUnits.filter(unit => {
+      const forms = Object.values(unit.forms);
+      return String(unit.id) === keyword || forms.some(f => f.name.toLowerCase().includes(keyword));
+    }).slice(0, 8); // 최대 8개까지만 추천
+
+    if (matched.length === 0) {
+      listContainer.classList.add("hidden");
+      return;
+    }
+
+    listContainer.innerHTML = matched.map(unit => {
+      const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
+      return `
+        <div class="autocomplete-item" onclick="selectAutocomplete(${unit.id}, '${form1.name}')">
+          <img src="assets/img/${unit.id}/1.png" onerror="this.style.display='none'" />
+          <div>
+            <span class="ac-id">No.${String(unit.id).padStart(3, "0")}</span>
+            <span class="ac-name">${form1.name}</span>
+            <span class="ac-rarity">(${form1.rarity})</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    listContainer.classList.remove("hidden");
+  });
+
+  // 바깥 영역 누르면 자동완성 닫기
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-container")) {
+      listContainer.classList.add("hidden");
+    }
+  });
+}
+
+function selectAutocomplete(unitId, name) {
+  document.getElementById("searchInput").value = name;
+  document.getElementById("autocompleteList").classList.add("hidden");
+  renderList();
+  openUnitModal(unitId);
+}
+
+// 상세 모달 열기 (1~4형태 탭 및 속성/능력 아이콘 반영)
 function openUnitModal(unitId) {
   currentUnit = allUnits.find(u => u.id === unitId);
   if (!currentUnit) return;
 
   const formKeys = Object.keys(currentUnit.forms);
-  currentFormKey = formKeys[formKeys.length - 1]; // 기본으로 최종 진화 형태 표시
+  currentFormKey = formKeys[0]; // 기본 모달 열었을 때도 1형태 기준
   currentLevel = 30;
 
   renderModalContent();
@@ -109,7 +164,6 @@ function renderModalContent() {
   const formKeys = Object.keys(currentUnit.forms);
   const form = currentUnit.forms[currentFormKey];
 
-  // 진화 단계 탭
   document.getElementById("formTabs").innerHTML = formKeys.map(k => `
     <button class="tab-btn ${k === currentFormKey ? "active" : ""}" 
             onclick="switchForm('${k}')">
@@ -117,7 +171,6 @@ function renderModalContent() {
     </button>
   `).join("");
 
-  // 스탯 및 DPS 계산
   const hp = calcStat(form.rawHitpoints, currentLevel, form.levelCurve);
   const hits = form.rawAttacks.filter(a => a > 0).map(a => calcStat(a, currentLevel, form.levelCurve));
   const totalAtk = hits.reduce((sum, v) => sum + v, 0);
@@ -126,25 +179,23 @@ function renderModalContent() {
   const cdSec = (form.cooldownFrames / form.fps).toFixed(2);
   const rangesText = (form.actualRanges || []).map(r => r.text).join(" / ");
 
-  // 능력 목록
+  // 특수 능력 및 아이콘 렌더링
   const abilitiesHtml = (form.abilities || []).map(ab => `
-    <li><strong>${ab.label_ko}</strong> ${ab._ref ? `<span class="ref">(${ab._ref})</span>` : ""}</li>
+    <li>
+      <img src="assets/img/abilities/${ab.key}.png" class="icon-sm" onerror="this.style.display='none'">
+      <strong>${ab.label_ko}</strong> ${ab._ref ? `<span class="ref">(${ab._ref})</span>` : ""}
+    </li>
   `).join("");
 
-  // 본능 목록
-  const talentsHtml = (currentUnit.talents || []).length > 0
-    ? currentUnit.talents.map(t => `
-        <div class="talent-item">
-          <span class="talent-kind ${t.kind}">${t.kind === "ultra" ? "초본능" : "본능"}</span>
-          <strong>${t.label}</strong> (Max Lv.${t.maxLevel})
-          <p>${t.description.replace(/\n/g, " ")}</p>
-        </div>
-      `).join("")
-    : "<p class='empty'>본능 데이터 없음</p>";
-
   document.getElementById("modalBody").innerHTML = `
-    <h2>[No.${String(currentUnit.id).padStart(3, "0")}] ${form.name} <small>(${form.rarity})</small></h2>
-    <p class="desc">${form.description.replace(/\n/g, "<br>")}</p>
+    <div class="modal-header-flex">
+      <!-- 폴더 구조: assets/img/캐릭터ID/형태번호.png -->
+      <img src="assets/img/${currentUnit.id}/${currentFormKey}.png" alt="${form.name}" class="modal-unit-img" onerror="this.style.display='none'" />
+      <div>
+        <h2>[No.${String(currentUnit.id).padStart(3, "0")}] ${form.name} <small>(${form.rarity})</small></h2>
+        <p class="desc">${form.description.replace(/\n/g, "<br>")}</p>
+      </div>
+    </div>
 
     <div class="level-control">
       <label>기준 레벨: <strong>Lv.${currentLevel}</strong></label>
@@ -157,14 +208,10 @@ function renderModalContent() {
       <tr><th>DPS</th><td>${dps.toLocaleString()}</td><th>인식 사거리</th><td>${form.recognitionRange} (실제: ${rangesText})</td></tr>
       <tr><th>공격 주기</th><td>${form.attackCycleFrames}f (${cycleSec}초)</td><th>선딜레이</th><td>${form.foreswingFrames.join(", ")}f</td></tr>
       <tr><th>생산 코스트</th><td>${form.cost}원</td><th>재생산</th><td>${form.cooldownFrames}f (${cdSec}초)</td></tr>
-      <tr><th>이동 속도</th><td>${form.speed}</td><th>히트백 (KB)</th><td>${form.knockbacks}회</td></tr>
     </table>
 
     <h3>특수 능력</h3>
     <ul class="ability-list">${abilitiesHtml}</ul>
-
-    <h3>본능 정보</h3>
-    <div class="talent-list">${talentsHtml}</div>
   `;
 }
 
@@ -178,8 +225,7 @@ function updateLevel(val) {
   renderModalContent();
 }
 
-// 이벤트 연결
-["searchInput", "rarityFilter", "traitFilter", "abilityFilter"].forEach(id => {
+["rarityFilter", "traitFilter", "abilityFilter"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderList);
 });
 document.getElementById("closeModal").addEventListener("click", () => {
