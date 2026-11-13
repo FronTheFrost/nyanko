@@ -72,7 +72,8 @@ function update(){
       extra.push(`${nm} +${n(S.hits.reduce((s,h,i)=>s+(h&&ap(i+1)?(c.metal&&!(FX.critical&&cr)?1:h*c.m*c.str*m*(FX.critical&&cr?2:1)*(FX.savage_blow&&sv?1+sb:1)):0),0)*lv)}`)}
   const nom=S.hits.reduce((s,h)=>s+(h?ehit(h,0,0,c0):0),0)/(G.cyc/fp);
   const md=x=>G.mod[x]?` mod-${G.mod[x]}`:'',rg=f.actualRanges.map(r=>`${f.actualRanges.length>1?r.hit+'타 ':''}${r.minimum}~${r.maximum}`);
-  $('#c1').innerHTML=`<small>체력</small><b class="${md('hp').trim()}">${n(S.hp)}</b><div class="sub">히트백 ${f.knockbacks}회</div>`;
+  const ed=c.r<1;
+  $('#c1').innerHTML=`<small>${ed?'실질 체력':'체력'}</small><b class="${md('hp').trim()}">${n(S.hp/c.r)}</b>${ed?`<div class="sub">체력 ${n(S.hp)} · 받는 피해 1/${+(1/c.r).toFixed(1)}</div>`:''}<div class="sub">히트백 ${f.knockbacks}회</div>`;
   $('#c2').innerHTML=`<small>공격력</small><button class="tgl" id="tgl">${$('#dp').hidden?'▾':'▴'}</button><b class="${md('atk').trim()}">${n(shown.reduce((a,b)=>a+b,0))}</b>
 ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra.length?`<div class="sub">${extra.join(' · ')}</div>`:''}<div class="sub">DPS <b>${n(nom)}</b></div>`;
   $('#tgl').onclick=()=>{$('#dp').hidden=!$('#dp').hidden;$('#tgl').textContent=$('#dp').hidden?'▾':'▴'};
