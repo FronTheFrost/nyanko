@@ -79,3 +79,5 @@ function dps(f,G,S,d,adj,c){
       w.forEach((n2,j)=>{if(n2)t+=ehit(h*x.damage_bands_percent[j]/100,1,1,c)*(x.chance/100)*n2/cnt})}});
   return t/(G.cyc/(f.fps||30))
 }
+
+const ICON={"strong":"203","weaken":"195","critical":"201","knockback":"207","weaken_immune":"213","zombie_killer":"260","survive":"199","warp_immune":"262","mini_wave":"293","slow":"198","knockback_immune":"216","barrier_breaker":"264","freeze":"197","freeze_immune":"214","curse_immune":"116","resistant":"204","wave_blocker":"218","massive_damage":"206","wave_immune":"210","double_bounty":"205","wave":"208","slow_immune":"215","strengthen":"196","counter_surge":"315","colossus_slayer":"297","behemoth_slayer":"302","attack_only":"202","sage_slayer":"319","dodge":"231","surge":"239","base_destroyer":"200","soulstrike":"300","curse":"289","toxic_immune":"237","explosion":"335","explosion_immune":"337","surge_immune":"243","mini_surge":"310","savage_blow":"229","shield_piercer":"296","production_speed":"396","t20":"47","t19":"45","t18":"43","t22":"51","t21":"49","t30":"109","t52":"235","t54":"241","single":"217","area":"211","omni_strike":"112"};
