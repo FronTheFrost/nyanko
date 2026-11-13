@@ -41,6 +41,7 @@ function derive(u,k,f,st){
     else if(id===62)up('mini_wave','소파동',{chance:v[0],level:v[1]},s);
     else if(id===56)up('surge','열파 공격',{chance:v[0],level:v[1],anchor:v[2]/4,span:v[3]/4},s);
     else if(id===65)up('mini_surge','소열파',{chance:v[0],level:v[1],anchor:v[2]/4,span:v[3]/4},s);
+    else if(id===67)up('explosion','폭파 공격',{chance:v[0],anchor:v[1]/4,span:0,damage_bands_percent:[100,70,40],band_widths:[150,100,100]},s);
     else if(TT[id]){if(!g.tr.includes(TT[id]))g.tr.push(TT[id])}
     else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v)},s);
   }
@@ -81,3 +82,4 @@ function dps(f,G,S,d,adj,c){
 }
 
 const ICON={"strong":"203","weaken":"195","critical":"201","knockback":"207","weaken_immune":"213","zombie_killer":"260","survive":"199","warp_immune":"262","mini_wave":"293","slow":"198","knockback_immune":"216","barrier_breaker":"264","freeze":"197","freeze_immune":"214","curse_immune":"116","resistant":"204","wave_blocker":"218","massive_damage":"206","wave_immune":"210","double_bounty":"205","wave":"208","slow_immune":"215","strengthen":"196","counter_surge":"315","colossus_slayer":"297","behemoth_slayer":"302","attack_only":"202","sage_slayer":"319","dodge":"231","surge":"239","base_destroyer":"200","soulstrike":"300","curse":"289","toxic_immune":"237","explosion":"335","explosion_immune":"337","surge_immune":"243","mini_surge":"310","savage_blow":"229","shield_piercer":"296","production_speed":"396","t20":"47","t19":"45","t18":"43","t22":"51","t21":"49","t30":"109","t52":"235","t54":"241","single":"217","area":"211","omni_strike":"112"};
+const ICONID={"1":"195","2":"197","3":"198","4":"202","5":"203","6":"204","7":"206","8":"207","9":"266","10":"196","11":"199","12":"200","13":"201","14":"260","15":"264","16":"205","17":"208","18":"43","19":"45","20":"47","21":"49","22":"51","23":"218","24":"53","29":"116","30":"109","44":"213","45":"214","46":"215","47":"216","48":"210","49":"262","50":"229","51":"231","52":"235","53":"237","54":"241","55":"243","56":"239","58":"296","59":"300","60":"289","62":"293","63":"297","64":"302","65":"310","66":"319","67":"335","68":"315","69":"337","72":"396","33":"219","34":"220","35":"221","36":"222","37":"223","38":"224","39":"225","40":"226","57":"294","41":"227"};
