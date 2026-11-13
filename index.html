@@ -10,7 +10,12 @@
   <header class="header">
     <h1>Bestnyanko 유닛 DB</h1>
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="유닛 이름, ID, 설명 검색..." />
+      <!-- 자동완성 기능을 품은 검색바 영역 -->
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="유닛 이름, ID 검색..." autocomplete="off" />
+        <div id="autocompleteList" class="autocomplete-list hidden"></div>
+      </div>
+      
       <select id="rarityFilter">
         <option value="ALL">전체 등급</option>
         <option value="기본">기본</option>
@@ -42,11 +47,6 @@
         <option value="massive_damage">초 데미지</option>
         <option value="resistant">맷집이 좋다</option>
         <option value="freeze">움직임을 멈춘다</option>
-        <option value="slow">움직임을 느리게 한다</option>
-        <option value="knockback">날려버린다</option>
-        <option value="weaken">공격력 다운</option>
-        <option value="critical">크리티컬</option>
-        <option value="wave_blocker">파동 스토퍼</option>
       </select>
     </div>
   </header>
