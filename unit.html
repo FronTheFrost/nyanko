@@ -1,403 +1,501 @@
-:root{
-    --bg:#0f141b;
-    --card:#18202b;
-    --line:#2a3646;
-    --tx:#eef2f7;
-    --mu:#93a1b5;
-    --ac:#ff8a2b;
-    color-scheme:dark
-}
-
-@media(prefers-color-scheme:light){
-    :root{
-        --bg:#f4f6f9;
-        --card:#fff;
-        --line:#d9e0ea;
-        --tx:#1a2330;
-        --mu:#5d6b7f;
-        --ac:#e8630a;
-        color-scheme:light
-    }
-}
-
-*{box-sizing:border-box}
-
-body{
-    margin:0;
-    background:var(--bg);
-    color:var(--tx);
-    font:15px/1.45 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif
-}
-
-a{color:inherit;text-decoration:none}
-
-header{
-    position:sticky;
-    top:0;
-    z-index:5;
-    background:var(--bg);
-    border-bottom:1px solid var(--line);
-    padding:calc(10px + env(safe-area-inset-top)) 12px 10px
-}
-
-.bar{
-    display:flex;
-    gap:10px;
-    align-items:center
-}
-
-.brand{
-    font-size:21px;
-    font-weight:900;
-    letter-spacing:-.04em;
-    white-space:nowrap
-}
-
-.brand span{color:var(--ac)}
-
-.back{
-    margin-left:auto;
-    color:var(--mu)
-}
-
-input,select,button{
-    font:inherit;
-    color:var(--tx);
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:9px;
-    padding:8px 10px;
-    min-width:0
-}
-
-input[type=range]{
-    width:100%;
-    padding:0;
-    accent-color:var(--ac)
-}
-
-#q{flex:1}
-
-.fl{
-    display:flex;
-    gap:6px;
-    margin-top:8px;
-    overflow-x:auto;
-    scrollbar-width:none
-}
-
-.fl>*{flex:0 0 auto}
-
-main{
-    padding:10px 12px 40px;
-    max-width:900px;
-    margin:auto
-}
-
-#cnt{
-    color:var(--mu);
-    font-size:13px;
-    margin:4px 2px 8px
-}
-
-#grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
-    gap:9px
-}
-
-.c{
-    display:block;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:10px;
-    content-visibility:auto;
-    contain-intrinsic-size:180px
-}
-
-.c:active,.c:hover{border-color:var(--ac)}
-
-.top{
-    display:flex;
-    gap:9px;
-    align-items:center
-}
-
-/* 목록 이미지 */
-
-.pt{
-    position:relative;
-    width:104px;
-    height:79px;
-    border-radius:9px;
-    background:var(--line);
-    display:grid;
-    place-items:center;
-    color:var(--mu);
-    font-size:11px;
-    flex:none;
-    overflow:hidden
-}
-
-.pt img{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    image-rendering:pixelated
-}
-
-.nm{
-    font-weight:800;
-    font-size:14px;
-    line-height:1.25
-}
-
-.id{
-    color:var(--mu);
-    font-size:11px
-}
-
-.st{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:2px 8px;
-    margin-top:8px;
-    font-size:12px;
-    color:var(--mu)
-}
-
-.st b{
-    color:var(--tx);
-    font-variant-numeric:tabular-nums
-}
-
-.tag{
-    display:inline-block;
-    font-size:11px;
-    padding:1px 8px;
-    border-radius:99px;
-    background:var(--line);
-    color:var(--tx);
-    margin:3px 4px 0 0
-}
-
-.tag.r{
-    background:var(--ac);
-    color:#111;
-    font-weight:700
-}
-
-h1{
-    font-size:20px;
-    margin:8px 0 8px
-}
-
-h3{
-    font-size:14px;
-    margin:18px 0 6px;
-    color:var(--ac)
-}
-
-.tabs{
-    display:flex;
-    gap:6px;
-    overflow-x:auto;
-    padding-bottom:4px
-}
-
-.tabs>*{flex:0 0 auto}
-
-.tab.on{
-    background:var(--ac);
-    color:#111;
-    border-color:var(--ac);
-    font-weight:700
-}
-
-/* 상세 페이지 캐릭터 이미지 */
-
-.unit-image{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:130px;
-    margin:12px 0;
-    padding:12px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px
-}
-
-.unit-image img{
-    display:block;
-    width:208px;
-    height:158px;
-    max-width:100%;
-    object-fit:contain;
-    image-rendering:pixelated
-}
-
-.ds{
-    color:var(--mu);
-    font-size:13px;
-    margin:6px 0 4px
-}
-
-.lc label{
-    display:block;
-    margin-bottom:10px;
-    font-size:13px;
-    color:var(--mu)
-}
-
-.lc b{
-    float:right;
-    color:var(--tx);
-    font-size:15px
-}
-
-.g{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:8px;
-    margin-top:10px
-}
-
-.kv,.row{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:8px 10px
-}
-
-.kv small{
-    display:block;
-    color:var(--mu);
-    font-size:11px
-}
-
-.kv b{
-    font-size:17px;
-    font-variant-numeric:tabular-nums
-}
-
-.row{margin-bottom:6px}
-
-.row i{
-    color:var(--mu);
-    font-style:normal;
-    font-size:13px
-}
-
-.row small{
-    display:block;
-    color:var(--mu);
-    margin-top:2px
-}
-
-.ctl{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    flex-wrap:wrap
-}
-
-.ctl input[type=number]{width:100px}
-
-.ctl label{
-    font-size:13px;
-    color:var(--mu)
-}
-
-#dr{
-    margin-top:8px;
-    font-size:15px
-}
-
-#dr i{
-    color:var(--mu);
-    font-style:normal;
-    font-size:13px
-}
-
-.ch{
-    width:100%;
-    height:auto;
-    touch-action:pan-y;
-    margin-top:6px
-}
-
-.ch text{
-    fill:var(--mu);
-    font-size:11px
-}
-
-.gr line{stroke:var(--line)}
-
-.zero{
-    stroke:var(--ac);
-    stroke-width:1.5;
-    stroke-dasharray:4 3
-}
-
-.ar{
-    fill:var(--ac);
-    opacity:.18
-}
-
-.ln{
-    fill:none;
-    stroke:var(--ac);
-    stroke-width:2
-}
-
-.ls{
-    fill:none;
-    stroke:var(--mu);
-    stroke-dasharray:4 3
-}
-
-.mk{
-    stroke:var(--tx);
-    stroke-dasharray:3 3
-}
-
-.dot{fill:var(--tx)}
-
-.note{
-    color:var(--mu);
-    font-size:12px;
-    margin-top:8px
-}
-
-@media(min-width:700px){
-
-    #grid{
-        grid-template-columns:repeat(auto-fill,minmax(200px,1fr))
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>냥코 도감</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+<div class="bar">
+<a class="brand" href="index.html">냥코<span>도감</span></a>
+<a class="back" href="index.html">← 목록</a>
+</div>
+</header>
+
+<main>
+<p id="cnt">불러오는 중…</p>
+<div id="app"></div>
+</main>
+
+<script src="common.js"></script>
+
+<script>
+let U,u,k,f,G,B,P,D,STR=false;
+let ST={TN:false,TU:false,TL:{}},CH;
+
+(async()=>{
+    U=await load();
+    if(!U)return;
+
+    const q=new URLSearchParams(location.search);
+    u=U.find(x=>x.id==q.get('id'));
+
+    if(!u){
+        $('#cnt').textContent='없는 유닛이에요.';
+        return;
     }
 
-    .g{
-        grid-template-columns:repeat(3,1fr)
+    $('#cnt').remove();
+
+    setForm(
+        u.forms[q.get('f')]?q.get('f'):lastK(u),
+        q.get('b'),
+        q.get('p')
+    );
+})();
+
+function setForm(key,b,p){
+    k=key;
+    f=u.forms[k];
+
+    const mb=f.maxBaseLevel||1;
+    const mp=f.maxPlusLevel||0;
+
+    B=Math.min(mb,Math.max(1,+b||mb));
+    P=Math.min(mp,Math.max(0,+p||0));
+
+    D=f.recognitionRange;
+    build();
+}
+
+function build(){
+
+    const mb=f.maxBaseLevel||1;
+    const mp=f.maxPlusLevel||0;
+    const ev=f.evolution||{};
+
+    const tl=+k>=3?(u.talents||[]):[];
+    const hasU=tl.some(t=>t.kind==='ultra');
+
+    const mats=(ev.materials||[]).map(m=>
+        `<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`
+    ).join('');
+
+    const trow=t=>`
+        <div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}">
+            <b>${esc(t.label)}</b>
+            ${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}
+            <span class="tv"></span>
+            <input type="range" min="0" max="${t.maxLevel}"
+            value="${ST.TL[tkey(t)]??t.maxLevel}">
+        </div>
+    `;
+
+    document.title=`${f.name} · 냥코 도감`;
+
+    $('#app').innerHTML=`
+
+        <div class="tabs">
+            ${Object.keys(u.forms).map(x=>`
+                <button class="tab${x===k?' on':''}" data-k="${x}">
+                    ${esc(u.forms[x].name)}
+                </button>
+            `).join('')}
+        </div>
+
+        <h1>#${u.id} ${esc(f.name)}</h1>
+
+        <div class="unit-image">
+            <img
+                id="unitImg"
+                src="img/u/${u.id}/${Number(k)-1}.png"
+                alt="${esc(f.name)}"
+                onerror="this.style.display='none'"
+            >
+        </div>
+
+        <div id="tg"></div>
+
+        <p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
+
+        <h3>레벨</h3>
+
+        <div class="lc">
+            <label>
+                기본 레벨 <b id="bv"></b>
+                <input type="range" id="bs"
+                min="1" max="${mb}" value="${B}">
+            </label>
+
+            ${mp?`
+                <label>
+                    플러스 레벨 <b id="pv"></b>
+                    <input type="range" id="ps"
+                    min="0" max="${mp}" value="${P}">
+                </label>
+            `:''}
+        </div>
+
+        ${tl.length?`
+            <h3>본능</h3>
+
+            <div class="ml">
+                <label>
+                    <input type="checkbox" id="tn" ${ST.TN?'checked':''}>
+                    본능 적용
+                </label>
+
+                ${hasU?`
+                    <label>
+                        <input type="checkbox" id="tu" ${ST.TU?'checked':''}>
+                        초본능 적용
+                    </label>
+                `:''}
+            </div>
+
+            ${tl.map(trow).join('')}
+        `:''}
+
+        <div class="g" id="sg"></div>
+
+        <h3>DPS 계산기</h3>
+
+        <div class="ctl">
+            <label>
+                적 거리
+                <input type="number" id="dd"
+                step="10" inputmode="numeric" value="${D}">
+            </label>
+
+            <label id="skl" hidden>
+                <input type="checkbox" id="sk" ${STR?'checked':''}>
+                공격력 업 발동
+                <span id="skt"></span>
+            </label>
+        </div>
+
+        <div id="dr"></div>
+        <div id="chart"></div>
+
+        <p class="note">
+            그래프 왼쪽은 양수 거리, 오른쪽은 음수 거리입니다.
+            0을 기준으로 양방향을 확인할 수 있어요.
+            그래프를 누르거나 끌어서 거리를 바꿀 수 있습니다.
+            보물은 전부 최대(체력·공격력 ×2.5)로 계산하고,
+            크리티컬(2배)·혼신의 일격·파동·열파·폭파는
+            확률 기댓값으로 반영합니다.
+            점선은 확률 효과를 뺀 DPS입니다.
+        </p>
+
+        <div id="ab"></div>
+
+        ${ev.xp||mats?`
+            <h3>진화</h3>
+            <div class="row">
+                ${ev.xp?`XP ${n(ev.xp)} `:''}
+                ${mats}
+            </div>
+        `:''}
+    `;
+
+    $('#bs').oninput=e=>{
+        B=+e.target.value;
+        update();
+    };
+
+    if(mp){
+        $('#ps').oninput=e=>{
+            P=+e.target.value;
+            update();
+        };
     }
 
+    $('#dd').oninput=e=>{
+        D=e.target.value===''?0:Number(e.target.value);
+        if(!Number.isFinite(D))D=0;
+        mark();
+    };
+
+    $('#sk').onchange=e=>{
+        STR=e.target.checked;
+        update();
+    };
+
+    if($('#tn')){
+        $('#tn').onchange=e=>{
+            ST.TN=e.target.checked;
+            update();
+        };
+    }
+
+    if($('#tu')){
+        $('#tu').onchange=e=>{
+            ST.TU=e.target.checked;
+            update();
+        };
+    }
+
+    document.querySelectorAll('.tr input').forEach(i=>{
+        i.oninput=()=>{
+            ST.TL[i.closest('.tr').dataset.k]=+i.value;
+            update();
+        };
+    });
+
+    document.querySelectorAll('.tab').forEach(t=>{
+        t.onclick=()=>{
+            setForm(t.dataset.k,B,P);
+        };
+    });
+
+    update();
 }
 
-.ml{
-    display:flex;
-    gap:16px;
-    flex-wrap:wrap;
-    margin-bottom:8px
+function update(){
+
+    G=derive(u,k,f,ST);
+
+    const S=stats(f,B,P,G);
+    const mb=f.maxBaseLevel||1;
+    const mp=f.maxPlusLevel||0;
+
+    const A=x=>G.ab.find(a=>a.key===x);
+    const fp=f.fps||30;
+
+    const kv=(l,v)=>`
+        <div class="kv">
+            <small>${l}</small>
+            <b>${v}</b>
+        </div>
+    `;
+
+    const h=S.hits.filter(x=>x>0);
+
+    $('#bv').textContent=`${B} / ${mb}`;
+
+    if(mp)$('#pv').textContent=`+${P} / ${mp}`;
+
+    $('#tg').innerHTML=
+        `<span class="tag r">${esc(f.rarity)}</span>`+
+        G.tr.map(t=>
+            `<span class="tag">${esc(TR[t]||t)}</span>`
+        ).join('');
+
+    $('#sg').innerHTML=
+        kv('체력',n(S.hp))+
+        kv('공격력',n(S.atk)+
+            (h.length>1?
+            ` <small style="display:inline">(${h.join('+')})</small>`:'')
+        )+
+        kv('공격 주기',(G.cyc/fp).toFixed(2)+'초')+
+        kv('인식 사거리',f.recognitionRange)+
+        kv('이동속도',G.spd)+
+        kv('넉백',f.knockbacks+'회')+
+        kv('코스트',n(G.cost))+
+        kv('재생산',(G.cd/fp).toFixed(2)+'초');
+
+    const st=A('strengthen');
+
+    $('#skl').hidden=!st;
+
+    if(st){
+        $('#skt').textContent=`(체력 ${st.threshold_percent}% 이하)`;
+    }
+
+    $('#ab').innerHTML=G.ab.length?
+        `<h3>능력</h3>`+
+        G.ab.map(a=>`
+            <div class="row">${abil(a)}</div>
+        `).join(''):'';
+
+    document.querySelectorAll('.tr').forEach(r=>{
+        const on=r.dataset.u==='1'?ST.TU:ST.TN;
+        const i=r.querySelector('input');
+
+        r.classList.toggle('off',!on);
+
+        r.querySelector('.tv').textContent=
+            `Lv ${i.value} / ${i.max}`;
+    });
+
+    $('#chart').innerHTML=chart(S);
+
+    mark();
+
+    history.replaceState(
+        null,
+        '',
+        `?id=${u.id}&f=${k}&b=${B}&p=${P}`
+    );
 }
 
-.ml label{font-size:14px}
 
-.tr.off{opacity:.45}
+// 양수는 왼쪽, 음수는 오른쪽
+function chart(S){
 
-.tv{
-    float:right;
-    color:var(--mu);
-    font-size:13px
+    const W=600,H=220;
+    const L=48,R=10,T=12,Bm=26;
+
+    // 양수 및 음수 공격 범위를 모두 고려
+    const X=Math.max(
+        1,
+        rangeX(f,G),
+        ...f.actualRanges.flatMap(r=>[
+            Math.abs(r.minimum),
+            Math.abs(r.maximum)
+        ])
+    );
+
+    const N=Math.min(600,Math.max(100,Math.ceil(X*2)));
+
+    const pts=[];
+
+    for(let i=0;i<=N;i++){
+
+        const d=X-2*X*i/N;
+
+        pts.push([
+            d,
+            dps(f,G,S,d,true,STR),
+            dps(f,G,S,d,false,STR)
+        ]);
+    }
+
+    const M=Math.max(1,...pts.map(p=>p[1]))*1.1;
+
+    // 양수 왼쪽, 음수 오른쪽
+    const sx=d=>L+(X-d)/(2*X)*(W-L-R);
+    const sy=v=>T+(1-v/M)*(H-T-Bm);
+
+    CH={S,X,sx,sy,W,L,R,T,Bm};
+
+    const path=i=>pts.map((p,j)=>
+        (j?'L':'M')+
+        sx(p[0]).toFixed(1)+' '+
+        sy(p[i]).toFixed(1)
+    ).join('');
+
+    let gr='';
+
+    // 가로축 눈금 및 세로축 눈금
+    for(let i=0;i<=6;i++){
+
+        const d=X-2*X*i/6;
+        const v=M*i/4;
+
+        gr+=`
+            <line
+                x1="${sx(d)}"
+                x2="${sx(d)}"
+                y1="${T}"
+                y2="${H-Bm}"
+            />
+
+            <text
+                x="${sx(d)}"
+                y="${H-8}"
+                text-anchor="middle"
+            >${d>0?'+':''}${Math.round(d)}</text>
+        `;
+    }
+
+    for(let i=0;i<=4;i++){
+
+        const v=M*i/4;
+
+        gr+=`
+            <line
+                x1="${L}"
+                x2="${W-R}"
+                y1="${sy(v)}"
+                y2="${sy(v)}"
+            />
+
+            <text
+                x="${L-5}"
+                y="${sy(v)+4}"
+                text-anchor="end"
+            >${n(v)}</text>
+        `;
+    }
+
+    const diff=pts.some(p=>Math.abs(p[1]-p[2])>.5);
+
+    return`
+        <svg id="svg" class="ch" viewBox="0 0 ${W} ${H}">
+
+            <g class="gr">${gr}</g>
+
+            <line
+                class="zero"
+                x1="${sx(0)}"
+                x2="${sx(0)}"
+                y1="${T}"
+                y2="${H-Bm}"
+            />
+
+            <path
+                class="ar"
+                d="${path(1)}L${sx(-X)} ${sy(0)}L${sx(X)} ${sy(0)}Z"
+            />
+
+            ${diff?`<path class="ls" d="${path(2)}"/>`:''}
+
+            <path class="ln" d="${path(1)}"/>
+
+            <line id="mk" class="mk"
+                y1="${T}" y2="${H-Bm}"/>
+
+            <circle id="dot" class="dot" r="4"/>
+
+        </svg>
+    `;
 }
+
+
+function mark(){
+
+    if(!CH)return;
+
+    const a=dps(f,G,CH.S,D,true,STR);
+    const b=dps(f,G,CH.S,D,false,STR);
+
+    const x=CH.sx(
+        Math.max(-CH.X,Math.min(CH.X,D))
+    );
+
+    $('#mk').setAttribute('x1',x);
+    $('#mk').setAttribute('x2',x);
+
+    $('#dot').setAttribute('cx',x);
+    $('#dot').setAttribute('cy',CH.sy(a));
+
+    $('#dr').innerHTML=
+        `거리 ${D>0?'+':''}${D}에서 <b>${n(a)}</b> DPS`+
+        (Math.abs(a-b)>.5?
+        ` <i>(확률 효과 제외 ${n(b)})</i>`:'');
+
+}
+
+
+// 그래프 터치 및 드래그
+const pick=e=>{
+
+    const s=e.target.closest('#svg');
+
+    if(!s)return;
+
+    if(e.type==='pointermove'&&!e.buttons)return;
+
+    const r=s.getBoundingClientRect();
+
+    const vx=(e.clientX-r.left)/r.width*CH.W;
+
+    const ratio=(vx-CH.L)/(CH.W-CH.L-CH.R);
+
+    D=Math.round(CH.X-2*CH.X*ratio);
+
+    $('#dd').value=D;
+
+    mark();
+};
+
+$('#app').addEventListener('pointerdown',pick);
+$('#app').addEventListener('pointermove',pick);
+
+</script>
+</body>
+</html>
