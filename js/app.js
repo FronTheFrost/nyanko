@@ -1,6 +1,6 @@
 let allUnits = [];
 let currentUnitId = null;
-let currentFormKey = "0"; // 기본 첫 형태를 0으로 설정
+let currentFormKey = "0"; // 0부터 시작하는 진화 형태 키 반영
 let currentBaseLevel = 30;
 let currentPlusLevel = 0;
 let selectedTargetTrait = "ALL";
@@ -26,7 +26,7 @@ function calcStat(rawStat, level, levelCurve, treasureMultiplier = 2.5) {
 async function init() {
   const countEl = document.getElementById("resultCount");
   try {
-    countEl.textContent = "데이터 불러오는 중...";
+    if (countEl) countEl.textContent = "데이터 불러오는 중...";
     const res = await fetch("./data/units.json");
     if (!res.ok) throw new Error(`HTTP 에러 (${res.status})`);
     
@@ -42,7 +42,9 @@ async function init() {
     window.addEventListener("popstate", checkRoute);
 
   } catch (err) {
-    countEl.innerHTML = `<span style="color: #ef4444;">데이터 로드 실패: ${err.message}<br>(data/units.json 경로를 확인해주세요)</span>`;
+    if (countEl) {
+      countEl.innerHTML = `<span style="color: #ef4444;">데이터 로드 실패: ${err.message}<br>(data/units.json 경로를 확인해주세요)</span>`;
+    }
     console.error(err);
   }
 }
@@ -73,8 +75,8 @@ function showDetailView(unitId, pushHistory = true) {
   if (!unit) return;
 
   currentUnitId = unitId;
-  const formKeys = Object.keys(unit.forms); // 예: ["0", "1", "2"] 또는 ["0", "1", "2", "3"]
-  currentFormKey = formKeys[0]; // 첫 번째 형태 (0)로 초기화
+  const formKeys = Object.keys(unit.forms);
+  currentFormKey = formKeys[0]; // 첫 번째 형태 키 (통상 "0")
   currentBaseLevel = 30;
   currentPlusLevel = 0;
   targetDistance = 0;
@@ -97,7 +99,6 @@ function renderList() {
   const ability = document.getElementById("abilityFilter").value;
 
   const filtered = allUnits.filter(unit => {
-    // 0번 형태(또는 첫 번째 형태) 기준
     const formKeys = Object.keys(unit.forms);
     const form1 = unit.forms["0"] || unit.forms[formKeys[0]];
     const forms = Object.values(unit.forms);
@@ -141,7 +142,6 @@ function renderList() {
           <span class="unit-rarity">${form1.rarity}</span>
         </div>
         <div class="unit-img-wrap">
-          <!-- 0, 1, 2, 3 형태 키값 그대로 반영 -->
           <img src="assets/img/${unit.id}/${defaultKey}.png" alt="${form1.name}" loading="lazy" onerror="this.style.display='none'" />
         </div>
         <div class="unit-name">${form1.name}</div>
@@ -155,14 +155,13 @@ function renderDetailContent() {
   const unit = allUnits.find(u => u.id === currentUnitId);
   if (!unit) return;
 
-  const formKeys = Object.keys(unit.forms); // ["0", "1", "2"...]
+  const formKeys = Object.keys(unit.forms);
   const form = unit.forms[currentFormKey];
 
   if (currentBaseLevel > form.maxBaseLevel) currentBaseLevel = form.maxBaseLevel;
   if (currentPlusLevel > form.maxPlusLevel) currentPlusLevel = form.maxPlusLevel;
   const totalLevel = currentBaseLevel + currentPlusLevel;
 
-  // 탭 이름 매핑 (0->1단, 1->2단, 2->3단, 3->4단)
   const formNames = ["1단 형태", "2단 형태", "3단 형태", "4단 형태"];
 
   document.getElementById("formTabs").innerHTML = formKeys.map((k, idx) => `
@@ -177,7 +176,7 @@ function renderDetailContent() {
   const baseHitsAtk = rawHits.map(a => calcStat(a, totalLevel, form.levelCurve));
   const baseTotalAtk = baseHitsAtk.reduce((sum, v) => sum + v, 0);
 
-  // 속성 상성 배율 계산
+  // 상성 속성 배율 계산
   let multiplier = 1.0;
   let activeAbilityText = "";
   
@@ -204,7 +203,7 @@ function renderDetailContent() {
   const cdSec = (form.cooldownFrames / form.fps).toFixed(2);
   const rangesText = (form.actualRanges || []).map(r => r.text).join(" / ");
 
-  // 거리별 유효 DPS 시뮬레이션
+  // 거리별 유효 DPS 계산
   let distanceEffectiveAtk = 0;
   if (form.actualRanges && form.actualRanges.length > 0) {
     form.actualRanges.forEach((range, idx) => {
@@ -226,7 +225,6 @@ function renderDetailContent() {
 
   document.getElementById("detailBody").innerHTML = `
     <div class="detail-header-flex">
-      <!-- 0, 1, 2, 3 형태 키값에 따른 이미지 경로 -->
       <img src="assets/img/${currentUnitId}/${currentFormKey}.png" alt="${form.name}" class="detail-unit-img" onerror="this.style.display='none'" />
       <div>
         <h2>[No.${String(currentUnitId).padStart(3, "0")}] ${form.name} <small style="color:var(--text-muted); font-size:0.8rem;">(${form.rarity})</small></h2>
@@ -234,7 +232,7 @@ function renderDetailContent() {
       </div>
     </div>
 
-    <!-- 레벨 조절 컨트롤 (기본 + 플러스) -->
+    <!-- 레벨 설정 (기본 + 플러스 분리 및 직접입력) -->
     <div class="calc-section">
       <h3>레벨 설정 (총 합산: Lv.${totalLevel})</h3>
       <div class="level-inputs-grid">
@@ -259,7 +257,7 @@ function renderDetailContent() {
       </div>
     </div>
 
-    <!-- 속성 상성 선택 -->
+    <!-- 상성 속성 선택 -->
     <div class="calc-section">
       <h3>상성 속성 선택 (DPS 배율 적용)</h3>
       <select id="targetTraitSelect" onchange="updateTargetTrait(this.value)" class="trait-select-box">
@@ -283,7 +281,7 @@ function renderDetailContent() {
       <tr><th>생산 코스트</th><td>${form.cost}원</td><th>재생산</th><td>${form.cooldownFrames}f (${cdSec}초)</td></tr>
     </table>
 
-    <!-- 거리별 DPS 시뮬레이터 -->
+    <!-- 거리별 유효 DPS 시뮬레이터 -->
     <div class="calc-section">
       <h3>적과의 거리별 유효 DPS 시뮬레이터</h3>
       <div class="distance-simulator">
