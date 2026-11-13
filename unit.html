@@ -5,7 +5,9 @@
 <main><p id="cnt">불러오는 중…</p><div id="app"></div></main>
 <script src="common.js"></script>
 <script>
-let U,u,k,f,G,B,P,D,STR=false,ST={TN:false,TU:false,TL:{}},CH;
+let U,u,k,f,G,B,P,D,STR=false,MODE='dps',EN=new Set(),FX={},ST={TN:false,TU:false,TL:{}},CH;
+const BA=['red','floating','black','metal','angel','alien','zombie','relic','aku','traitless'],FRM=x=>`${(x/30).toFixed(2)}초`;
+const pad=id=>String(id).padStart(3,'0'),img=(src,t)=>`<div class="pt">${t}<img src="${src}" alt="" onerror="this.remove()"></div>`;
 (async()=>{U=await load();if(!U)return;
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
   if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
@@ -16,60 +18,83 @@ function build(){
   const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,ev=f.evolution||{},tl=+k>=3?(u.talents||[]):[],hasU=tl.some(t=>t.kind==='ultra');
   const mats=(ev.materials||[]).map(m=>`<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`).join('');
   const trow=t=>`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`;
+  const chip=(x,l)=>`<button class="chip${EN.has(x)?' on':''}" data-e="${x}">${esc(l)}</button>`;
   document.title=`${f.name} · 냥코 도감`;
   $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
-<h1>#${u.id} ${esc(f.name)}</h1><div id="tg"></div>
-<p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
+<div class="hd">${img(`img/u/${u.id}/${k-1}.png`,u.id)}<div><h1>${esc(f.name)}</h1><div class="cd">#${pad(u.id)} · ${k}폼</div></div></div>
+<div id="tg"></div><p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
 <h3>레벨</h3><div class="lc"><label>기본 레벨 <b id="bv"></b><input type="range" id="bs" min="1" max="${mb}" value="${B}"></label>
 ${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
 ${tl.length?`<h3>본능</h3><div class="ml"><label><input type="checkbox" id="tn" ${ST.TN?'checked':''}> 본능 적용</label>${hasU?`<label><input type="checkbox" id="tu" ${ST.TU?'checked':''}> 초본능 적용</label>`:''}</div>${tl.map(trow).join('')}`:''}
-<div class="g" id="sg"></div>
-<h3>DPS 계산기</h3>
-<div class="ctl"><label>적 거리 <input type="number" id="dd" min="0" step="10" inputmode="numeric" value="${D}"></label>
-<label id="skl" hidden><input type="checkbox" id="sk" ${STR?'checked':''}> 공격력 업 발동 <span id="skt"></span></label></div>
+<h3>적 속성</h3><div class="chips" id="en">${BA.map(x=>chip(x,TR[x])).join('')}${Object.entries(SP).map(([x,v])=>chip(x,v[0])).join('')}</div>
+<div class="g"><div class="kv big" id="c1"></div><div class="kv big" id="c2"></div>
+<div class="pn" id="dp" hidden><div class="fx" id="fx"></div>
+<div class="ctl"><button class="tab" data-m="dps">DPS 함수</button><button class="tab" data-m="atk">공격력 함수</button>
+<label>적 거리 <input type="number" id="dd" step="10" inputmode="numeric" value="${D}"></label></div>
 <div id="dr"></div><div id="chart"></div>
-<p class="note">그래프를 누르거나 끌어서 거리를 바꿀 수 있어요. 보물은 전부 최대(체력·공격력 ×2.5)로 계산하고, 크리티컬(2배)·혼신의 일격·파동·열파·폭파는 확률 기댓값으로 반영해요. 점선은 확률 효과를 뺀 DPS예요.</p>
+<p class="note">그래프를 누르거나 끌어서 거리를 바꿔요. 왼쪽이 +, 오른쪽이 −예요. 위의 확률 효과 스위치는 공격력 칸에만 반영되고(발동했다고 가정), 공격력 업만 DPS 함수에도 반영돼요. 함수에는 크리티컬·혼신·파동·열파·폭파가 확률 기댓값으로 전부 들어가요. 보물은 전부 최대예요.</p></div>
+<div style="display:contents" id="gx"></div></div>
 <div id="ab"></div>${ev.xp||mats?`<h3>진화</h3><div class="row">${ev.xp?`XP ${n(ev.xp)} `:''}${mats}</div>`:''}`;
   $('#bs').oninput=e=>{B=+e.target.value;update()};
   if(mp)$('#ps').oninput=e=>{P=+e.target.value;update()};
-  $('#dd').oninput=e=>{D=Math.max(0,+e.target.value||0);mark()};
-  $('#sk').onchange=e=>{STR=e.target.checked;update()};
+  $('#dd').oninput=e=>{D=+e.target.value||0;mark()};
   if($('#tn'))$('#tn').onchange=e=>{ST.TN=e.target.checked;update()};
   if($('#tu'))$('#tu').onchange=e=>{ST.TU=e.target.checked;update()};
   document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
-  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setForm(t.dataset.k,B,P));
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.onclick=()=>setForm(t.dataset.k,B,P));
+  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{const e=c.dataset.e;EN.has(e)?EN.delete(e):EN.add(e);c.classList.toggle('on');update()});
+  document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{MODE=b.dataset.m;update()});
+  $('#fx').onchange=e=>{const x=e.target.dataset.fx;if(x==='STR')STR=e.target.checked;else FX[x]=e.target.checked;update()};
   update()
 }
 function update(){
   G=derive(u,k,f,ST);const S=stats(f,B,P,G),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
-  const kv=(l,v)=>`<div class="kv"><small>${l}</small><b>${v}</b></div>`,h=S.hits.filter(x=>x>0);
+  const c=mkctx(G,EN,STR),c0={...c,cc:0,sc:0},ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
   $('#bv').textContent=`${B} / ${mb}`;if(mp)$('#pv').textContent=`+${P} / ${mp}`;
   $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`+G.tr.map(t=>`<span class="tag">${esc(TR[t]||t)}</span>`).join('');
-  $('#sg').innerHTML=kv('체력',n(S.hp))+kv('공격력',n(S.atk)+(h.length>1?` <small style="display:inline">(${h.join('+')})</small>`:''))+kv('공격 주기',(G.cyc/fp).toFixed(2)+'초')+kv('인식 사거리',f.recognitionRange)+kv('이동속도',G.spd)+kv('넉백',f.knockbacks+'회')+kv('코스트',n(G.cost))+kv('재생산',(G.cd/fp).toFixed(2)+'초');
-  const st=A('strengthen');$('#skl').hidden=!st;if(st)$('#skt').textContent=`(체력 ${st.threshold_percent}% 이하)`;
-  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3>`+G.ab.map(a=>`<div class="row">${abil(a)}</div>`).join(''):'';
+  // 공격력 칸: 스위치로 켠 확률 효과는 '발동했다고 가정'
+  const cr=A('critical'),sv=A('savage_blow'),sb=sv?sv.boost_percent/100:0;
+  const shown=S.hits.map((h,i)=>{if(!h)return 0;const a=ap(i+1),crit=FX.critical&&cr&&a;
+    return c.metal&&!crit?1:Math.round(h*c.m*c.str*(crit?2:1)*(FX.savage_blow&&sv&&a?1+sb:1))}).filter(x=>x>0);
+  const extra=[];for(const[key,m,nm]of[['wave',1,'파동'],['mini_wave',.2,'소파동'],['surge',1,'열파'],['mini_surge',.2,'소열파'],['explosion',1,'폭파']])
+    if(FX[key]&&A(key)){const a=A(key),lv=/surge/.test(key)?(a.level||1):1;
+      extra.push(`${nm} +${n(S.hits.reduce((s,h,i)=>s+(h&&ap(i+1)?(c.metal&&!(FX.critical&&cr)?1:h*c.m*c.str*m*(FX.critical&&cr?2:1)*(FX.savage_blow&&sv?1+sb:1)):0),0)*lv)}`)}
+  const nom=S.hits.reduce((s,h)=>s+(h?ehit(h,0,0,c0):0),0)/(G.cyc/fp);
+  const md=x=>G.mod[x]?` mod-${G.mod[x]}`:'',rg=f.actualRanges.map(r=>`${f.actualRanges.length>1?r.hit+'타 ':''}${r.minimum}~${r.maximum}`);
+  $('#c1').innerHTML=`<small>체력</small><b class="${md('hp').trim()}">${n(S.hp)}</b><div class="sub">히트백 ${f.knockbacks}회</div>`;
+  $('#c2').innerHTML=`<small>공격력</small><button class="tgl" id="tgl">${$('#dp').hidden?'▾':'▴'}</button><b class="${md('atk').trim()}">${n(shown.reduce((a,b)=>a+b,0))}</b>
+${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra.length?`<div class="sub">${extra.join(' · ')}</div>`:''}<div class="sub">DPS(명목) <b>${n(nom)}</b></div>`;
+  $('#tgl').onclick=()=>{$('#dp').hidden=!$('#dp').hidden;$('#tgl').textContent=$('#dp').hidden?'▾':'▴'};
+  const kv=(l,v,s)=>`<div class="kv"><small>${l}</small><b>${v}</b>${s?`<div class="sub">${s}</div>`:''}</div>`,fs=f.foreswingFrames||[];
+  $('#gx').innerHTML=kv('공격 주기',FRM(G.cyc),`${G.cyc}f<br>선딜 ${fs.join(' / ')}f (${FRM(fs.at(-1)||0)}) · 후딜 ${G.bk}f (${FRM(G.bk)}) · 공격 간격 ${G.tba}f (${FRM(G.tba)})`)
+   +kv('쿨타임',FRM(G.cd),`${G.cd}f`)+kv('인식 사거리',f.recognitionRange,`타격 범위<br>${rg.join('<br>')}`)+kv('이동속도',G.spd)+kv('코스트',n(G.cost));
+  const fxs=[['critical','크리티컬'],['savage_blow','혼신의 일격'],['wave','파동'],['mini_wave','소파동'],['surge','열파'],['mini_surge','소열파'],['explosion','폭파']].filter(([x])=>A(x));
+  const st=A('strengthen');
+  $('#fx').innerHTML=fxs.map(([x,l])=>`<label><input type="checkbox" data-fx="${x}" ${FX[x]?'checked':''}> ${l}</label>`).join('')+(st?`<label><input type="checkbox" data-fx="STR" ${STR?'checked':''}> 공격력 업 (체력 ${st.threshold_percent}% 이하)</label>`:'');
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));
+  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3><div class="ag">`+G.ab.map(a=>`<div class="ab ${a.src||''}">${img(`img/ability/${a.key}.png`,a.key)}<div>${abil(a)}<i>${a.key}</i></div></div>`).join('')+'</div>':'';
   document.querySelectorAll('.tr').forEach(r=>{const on=r.dataset.u==='1'?ST.TU:ST.TN,i=r.querySelector('input');
     r.classList.toggle('off',!on);r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
-  $('#chart').innerHTML=chart(S);mark();
+  $('#chart').innerHTML=chart(S,c);mark();
   history.replaceState(null,'',`?id=${u.id}&f=${k}&b=${B}&p=${P}`)
 }
-function chart(S){
-  const W=600,H=220,L=48,R=10,T=12,Bm=26,X=rangeX(f,G),N=Math.min(300,X),pts=[];
-  for(let i=0;i<=N;i++){const d=X*i/N;pts.push([d,dps(f,G,S,d,true,STR),dps(f,G,S,d,false,STR)])}
-  const M=Math.max(1,...pts.map(p=>p[1]))*1.1,sx=d=>L+d/X*(W-L-R),sy=v=>T+(1-v/M)*(H-T-Bm);
-  CH={S,X,sx,sy,W,L,R};
+function chart(S,c){
+  const W=600,H=230,L=48,R=10,T=12,Bm=26,X=rangeX(f,G),Y=rangeMin(f,G),span=X-Y||1,N=Math.min(320,span),pts=[],fp=f.fps||30,sc=MODE==='atk'?G.cyc/fp:1;
+  for(let i=0;i<=N;i++){const d=X-span*i/N;pts.push([d,dps(f,G,S,d,true,c)*sc,dps(f,G,S,d,false,c)*sc])}
+  const M=Math.max(1,...pts.map(p=>p[1]))*1.4,sx=d=>L+(X-d)/span*(W-L-R),sy=v=>T+(1-v/M)*(H-T-Bm);
+  CH={S,c,X,Y,span,sx,sy,W,L,R,sc};
   const path=i=>pts.map((p,j)=>(j?'L':'M')+sx(p[0]).toFixed(1)+' '+sy(p[i]).toFixed(1)).join('');
-  let gr='';for(let i=0;i<=4;i++){const v=M*i/4,d=X*i/4;gr+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text x="${L-5}" y="${sy(v)+4}" text-anchor="end">${n(v)}</text><text x="${sx(d)}" y="${H-8}" text-anchor="middle">${Math.round(d)}</text>`}
-  const diff=pts.some(p=>Math.abs(p[1]-p[2])>.5);
-  return`<svg id="svg" class="ch" viewBox="0 0 ${W} ${H}"><g class="gr">${gr}</g><path class="ar" d="${path(1)}L${sx(X)} ${sy(0)}L${L} ${sy(0)}Z"/>${diff?`<path class="ls" d="${path(2)}"/>`:''}<path class="ln" d="${path(1)}"/><line id="mk" class="mk" y1="${T}" y2="${H-Bm}"/><circle id="dot" class="dot" r="4"/></svg>`
+  let gr='';for(let i=0;i<=4;i++){const v=M*i/4,d=X-span*i/4;gr+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text x="${L-5}" y="${sy(v)+4}" text-anchor="end">${n(v)}</text><text x="${sx(d)}" y="${H-8}" text-anchor="middle">${Math.round(d)}</text>`}
+  const z=Y<0?`<line x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${H-Bm}" stroke="var(--line)"/>`:'';
+  return`<svg id="svg" class="ch" viewBox="0 0 ${W} ${H}"><g class="gr">${gr}</g>${z}<path class="ar" d="${path(1)}L${sx(Y)} ${sy(0)}L${sx(X)} ${sy(0)}Z"/>${pts.some(p=>Math.abs(p[1]-p[2])>.5)?`<path class="ls" d="${path(2)}"/>`:''}<path class="ln" d="${path(1)}"/><line id="mk" class="mk" y1="${T}" y2="${H-Bm}"/><circle id="dot" class="dot" r="4"/></svg>`
 }
 function mark(){
-  const a=dps(f,G,CH.S,D,true,STR),b=dps(f,G,CH.S,D,false,STR),x=CH.sx(Math.min(D,CH.X));
+  const a=dps(f,G,CH.S,D,true,CH.c)*CH.sc,b=dps(f,G,CH.S,D,false,CH.c)*CH.sc,x=CH.sx(Math.max(CH.Y,Math.min(D,CH.X)));
   $('#mk').setAttribute('x1',x);$('#mk').setAttribute('x2',x);$('#dot').setAttribute('cx',x);$('#dot').setAttribute('cy',CH.sy(a));
-  $('#dr').innerHTML=`거리 ${D}에서 <b>${n(a)}</b> DPS`+(Math.abs(a-b)>.5?` <i>(확률 효과 제외 ${n(b)})</i>`:'')
+  $('#dr').innerHTML=`거리 ${D}에서 <b>${n(a)}</b> ${MODE==='atk'?'공격력(기댓값)':'DPS'}`+(Math.abs(a-b)>.5?` <i>(확률 효과 제외 ${n(b)})</i>`:'')
 }
 const pick=e=>{const s=e.target.closest('#svg');if(!s||(e.type==='pointermove'&&!e.buttons))return;
   const r=s.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*CH.W;
-  D=Math.round(Math.min(CH.X,Math.max(0,(vx-CH.L)/(CH.W-CH.L-CH.R)*CH.X)));$('#dd').value=D;mark()};
+  D=Math.round(Math.min(CH.X,Math.max(CH.Y,CH.X-(vx-CH.L)/(CH.W-CH.L-CH.R)*CH.span)));$('#dd').value=D;mark()};
 $('#app').addEventListener('pointerdown',pick);$('#app').addEventListener('pointermove',pick);
 </script></body></html>
