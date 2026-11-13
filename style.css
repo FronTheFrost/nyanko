@@ -42,3 +42,5 @@ h3{font-size:14px;margin:18px 0 6px;color:var(--ac)}
 .ls{fill:none;stroke:var(--mu);stroke-dasharray:4 3}.mk{stroke:var(--tx);stroke-dasharray:3 3}.dot{fill:var(--tx)}
 .note{color:var(--mu);font-size:12px;margin-top:8px}
 @media(min-width:700px){#grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}.g{grid-template-columns:repeat(3,1fr)}}
+.ml{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}.ml label{font-size:14px}
+.tr.off{opacity:.45}.tv{float:right;color:var(--mu);font-size:13px}.tr input[type=range]{margin-top:6px}
