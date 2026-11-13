@@ -9,6 +9,16 @@ let OP={tl:0,en:0},U,u,k,f,G,B,P,D,STR=false,MODE='dps',EN=new Set(),FX={},ST={T
 const BA=['red','floating','black','metal','angel','alien','zombie','relic','aku','traitless'],FRM=x=>`${(x/30).toFixed(2)}초`;
 const pad=id=>String(id).padStart(3,'0');
 const img=(src,t,fb)=>`<div class="pt">${t}<img src="${src}" ${fb?`data-f="${fb}" `:''}alt="" onerror="if(this.dataset.f){this.src=this.dataset.f;this.removeAttribute('data-f')}else this.remove()"></div>`;
+const TC={red:['빨','#e8481c'],floating:['떠','#7aa04a'],black:['검','#3a3a3a'],metal:['메','#8f949b'],angel:['천','#c9b73a'],alien:['에','#4cc6b4'],zombie:['좀','#9b3fc4'],relic:['고','#6b7a2a'],aku:['악','#3b7bd4'],traitless:['무','#a9b3c6']};
+const TKEY={10:'strengthen',13:'critical',50:'savage_blow',17:'wave',62:'mini_wave',56:'surge',65:'mini_surge',67:'explosion'};
+const MU={strong:1.8,massive_damage:4,insane_damage:6},SM={colossus_slayer:1.6,behemoth_slayer:2.5,witch_killer:5,eva_killer:5};
+const IMM=k=>/_immune$/.test(k),RES=k=>/^t(18|19|20|21|22|30|52|54)$/.test(k);
+function det(a){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,du=a.duration_frames??a.dodge_duration_frames;
+  if(ch>0)x.push(`확률 ${ch}%`);if(du>0)x.push(`${+(du/30).toFixed(1)}초`);
+  const m=MU[a.key]??SM[a.key]??a.damage_multiplier??(a.boost_percent?1+a.boost_percent/100:a.attack_to_percent?a.attack_to_percent/100:0);
+  if(m)x.push(`${+(+m).toFixed(2)}배`);if(a.level>0&&/wave|surge/.test(a.key))x.push(`Lv.${a.level}`);return x.join(' · ')}
+const aImg=k=>{const p=ip(k);return img(p[0],k,p[1])};
+const tIcon=t=>{const id=t.abilityId,k=TKEY[id]||TK[id]||'t'+id;return ICONID[id]?[`img/i/${ICONID[id]}.png`,`img/ability/${k}.png`]:ip(k)};
 const ip=k=>ICON[k]?[`img/i/${ICON[k]}.png`,`img/ability/${k}.png`]:[`img/ability/${k}.png`,''];
 (async()=>{U=await load();if(!U)return;
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
@@ -19,7 +29,8 @@ function setForm(key,b,p){k=key;f=u.forms[k];const mb=f.maxBaseLevel||1,mp=f.max
 function build(){
   const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,ev=f.evolution||{},tl=+k>=3?(u.talents||[]):[],hasU=tl.some(t=>t.kind==='ultra');
   const mats=(ev.materials||[]).map(m=>`<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`).join('');
-  const trow=t=>`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`;
+  const trow=t=>{const ti=tIcon(t);return`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><div class="trh">${img(ti[0],'',ti[1]).replace('class="pt"','class="pt sm"')}<b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span></div><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`};
+  const tc=x=>`<button class="tc${EN.has(x)?' on':''}" data-e="${x}" title="${TR[x]}" style="background:${TC[x][1]}">${TC[x][0]}</button>`;
   const chip=(x,l)=>`<button class="chip${EN.has(x)?' on':''}" data-e="${x}">${esc(l)}</button>`;
   document.title=`${f.name} · 냥코 도감`;
   $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
@@ -28,13 +39,13 @@ function build(){
 <h3>레벨</h3><div class="lc"><label>기본 레벨 <b id="bv"></b><input type="range" id="bs" min="1" max="${mb}" value="${B}"></label>
 ${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
 ${tl.length?`<details class="dt" id="dtl"${OP.tl?' open':''}><summary>본능 <span id="tls"></span></summary><div class="ml"><label><input type="checkbox" id="tn" ${ST.TN?'checked':''}> 본능 적용</label>${hasU?`<label><input type="checkbox" id="tu" ${ST.TU?'checked':''}> 초본능 적용</label>`:''}</div>${tl.map(trow).join('')}</details>`:''}
-<details class="dt" id="den"${OP.en?' open':''}><summary>적 속성 <span id="ens"></span></summary><div class="sub2">속성</div><div class="chips">${BA.map(x=>chip(x,TR[x])).join('')}</div><div class="sub2">특수 속성</div><div class="chips">${Object.entries(SP).map(([x,v])=>chip(x,v[0])).join('')}</div></details>
+<details class="dt" id="den"${OP.en?' open':''}><summary>대항 속성 <span id="ens"></span></summary><div class="chips">${BA.map(tc).join('')}</div><div class="sub2">특수 속성</div><div class="chips">${Object.entries(SP).map(([x,v])=>chip(x,v[0])).join('')}</div></details>
 <div class="g"><div class="kv big" id="c1"></div><div class="kv big" id="c2"></div>
 <div class="pn" id="dp" hidden><div class="fx" id="fx"></div>
 <div class="ctl"><button class="tab" data-m="dps">실질 DPS 기댓값</button><button class="tab" data-m="atk">공격력 기댓값</button>
-<label>적 거리 <input type="number" id="dd" step="10" inputmode="numeric" value="${D}"></label></div>
+<label>사거리 <input type="number" id="dd" step="10" inputmode="numeric" value="${D}"></label></div>
 <div id="dr"></div><div id="chart"></div>
-<p class="note">거리는 위 입력칸에 숫자로 넣어주세요(그래프 왼쪽이 +, 오른쪽이 −). 위의 확률 효과 스위치는 공격력 칸에만 반영되고(발동했다고 가정), 공격력 업만 DPS 함수에도 반영돼요. 함수에는 크리티컬·혼신·파동·열파·폭파가 확률 기댓값으로 전부 들어가요. 보물은 전부 최대예요.</p></div>
+<p class="note">사거리를 숫자로 입력하세요.</p></div>
 <div style="display:contents" id="gx"></div></div>
 <div id="ab"></div>${ev.xp||mats?`<h3>진화</h3><div class="row">${ev.xp?`XP ${n(ev.xp)} `:''}${mats}</div>`:''}`;
   $('#bs').oninput=e=>{B=+e.target.value;update()};
@@ -45,7 +56,7 @@ ${tl.length?`<details class="dt" id="dtl"${OP.tl?' open':''}><summary>본능 <sp
   if($('#dtl'))$('#dtl').ontoggle=e=>OP.tl=e.target.open;$('#den').ontoggle=e=>OP.en=e.target.open;
   document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
   document.querySelectorAll('.tabs .tab').forEach(t=>t.onclick=()=>setForm(t.dataset.k,B,P));
-  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{const e=c.dataset.e;EN.has(e)?EN.delete(e):EN.add(e);c.classList.toggle('on');update()});
+  document.querySelectorAll('.chip,.tc').forEach(c=>c.onclick=()=>{const e=c.dataset.e;EN.has(e)?EN.delete(e):EN.add(e);c.classList.toggle('on');update()});
   document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{MODE=b.dataset.m;update()});
   $('#fx').onchange=e=>{const x=e.target.dataset.fx;if(x==='STR')STR=e.target.checked;else FX[x]=e.target.checked;update()};
   update()
@@ -69,13 +80,17 @@ function update(){
 ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra.length?`<div class="sub">${extra.join(' · ')}</div>`:''}<div class="sub">DPS <b>${n(nom)}</b></div>`;
   $('#tgl').onclick=()=>{$('#dp').hidden=!$('#dp').hidden;$('#tgl').textContent=$('#dp').hidden?'▾':'▴'};
   const kv=(l,v,s)=>`<div class="kv"><small>${l}</small><b>${v}</b>${s?`<div class="sub">${s}</div>`:''}</div>`,fs=f.foreswingFrames||[];
-  $('#gx').innerHTML=kv('공격 주기',FRM(G.cyc),`${G.cyc}f<br>선딜 ${fs.join(' / ')}f (${FRM(fs.at(-1)||0)}) · 후딜 ${G.bk}f (${FRM(G.bk)}) · 공격 간격 ${G.tba}f (${FRM(G.tba)})`)
-   +kv('쿨타임',FRM(G.cd),`${G.cd}f`)+kv('인식 사거리',f.recognitionRange,`타격 범위<br>${rg.join('<br>')}`)+kv('이동속도',G.spd)+kv('코스트',n(G.cost));
+  $('#gx').innerHTML=kv('공격 주기',FRM(G.cyc),`선딜 ${fs.map(FRM).join(' / ')} · 후딜 ${FRM(G.bk)} · 공격 간격 ${FRM(G.tba)}`)
+   +kv('쿨타임',FRM(G.cd))+kv('인식 사거리',f.recognitionRange,`타격 범위<br>${rg.join('<br>')}`)+kv('이동속도',G.spd)+kv('코스트',n(G.cost));
   const fxs=[['critical','크리티컬'],['savage_blow','혼신의 일격'],['wave','파동'],['mini_wave','소파동'],['surge','열파'],['mini_surge','소열파'],['explosion','폭파']].filter(([x])=>A(x));
   const st=A('strengthen');
   $('#fx').innerHTML=fxs.map(([x,l])=>`<label><input type="checkbox" data-fx="${x}" ${FX[x]?'checked':''}> ${l}</label>`).join('')+(st?`<label><input type="checkbox" data-fx="STR" ${STR?'checked':''}> 공격력 업 (체력 ${st.threshold_percent}% 이하)</label>`:'');
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));
-  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3><div class="ag">`+G.ab.map(a=>`<div class="ab ${a.src||''}">${img(ip(a.key)[0],a.key,ip(a.key)[1])}<div>${abil(a)}<i>${ip(a.key)[0]}</i></div></div>`).join('')+'</div>':'';
+  const eff=G.ab.filter(a=>!IMM(a.key)&&!RES(a.key)),imm=G.ab.filter(a=>IMM(a.key)),res=G.ab.filter(a=>RES(a.key));
+  const ic=a=>`<div class="ib ${a.src||''}" title="${esc(a.label_ko)}">${aImg(a.key)}${RES(a.key)&&a.txt?`<small>${esc(a.txt)}</small>`:''}</div>`;
+  $('#ab').innerHTML=(eff.length?`<h3>효과/능력</h3><div class="ag">${eff.map(a=>`<div class="ab ${a.src||''}">${aImg(a.key)}<div><b>${esc(a.label_ko)}</b>${det(a)?`<i>${det(a)}</i>`:''}</div></div>`).join('')}</div>`:'')
+   +(imm.length?`<h3>무효</h3><div class="ic">${imm.map(ic).join('')}</div>`:'')+(res.length?`<h3>내성</h3><div class="ic">${res.map(ic).join('')}</div>`:'');
+  document.querySelectorAll('.tc').forEach(b=>b.classList.toggle('mine',G.tr.includes(b.dataset.e)));
   document.querySelectorAll('.tr').forEach(r=>{const on=r.dataset.u==='1'?ST.TU:ST.TN,i=r.querySelector('input');
     r.classList.toggle('off',!on);r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
   if($('#tls'))$('#tls').textContent=ST.TN||ST.TU?'· '+[ST.TN&&'본능',ST.TU&&'초본능'].filter(Boolean).join('+')+' 적용':'';
@@ -96,6 +111,6 @@ function chart(S,c){
 function mark(){
   const a=dps(f,G,CH.S,D,true,CH.c)*CH.sc,b=dps(f,G,CH.S,D,false,CH.c)*CH.sc,x=CH.sx(Math.max(CH.Y,Math.min(D,CH.X)));
   $('#mk').setAttribute('x1',x);$('#mk').setAttribute('x2',x);$('#dot').setAttribute('cx',x);$('#dot').setAttribute('cy',CH.sy(a));
-  $('#dr').innerHTML=`거리 ${D}에서 <b>${n(a)}</b> ${MODE==='atk'?'공격력 기댓값':'실질 DPS 기댓값'}`+(Math.abs(a-b)>.5?` <i>(확률 효과 제외 ${n(b)})</i>`:'')
+  $('#dr').innerHTML=`사거리 ${D}에서 <b>${n(a)}</b> ${MODE==='atk'?'공격력 기댓값':'실질 DPS 기댓값'}`+(Math.abs(a-b)>.5?` <i>(확률 효과 제외 ${n(b)})</i>`:'')
 }
 </script></body></html>
