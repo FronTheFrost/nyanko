@@ -7,7 +7,9 @@
 <script>
 let OP={tl:0,en:0},U,u,k,f,G,B,P,D,STR=false,MODE='dps',EN=new Set(),FX={},ST={TN:false,TU:false,TL:{}},CH;
 const BA=['red','floating','black','metal','angel','alien','zombie','relic','aku','traitless'],FRM=x=>`${(x/30).toFixed(2)}초`;
-const pad=id=>String(id).padStart(3,'0'),img=(src,t)=>`<div class="pt">${t}<img src="${src}" alt="" onerror="this.remove()"></div>`;
+const pad=id=>String(id).padStart(3,'0');
+const img=(src,t,fb)=>`<div class="pt">${t}<img src="${src}" ${fb?`data-f="${fb}" `:''}alt="" onerror="if(this.dataset.f){this.src=this.dataset.f;this.removeAttribute('data-f')}else this.remove()"></div>`;
+const ip=k=>ICON[k]?[`img/i/${ICON[k]}.png`,`img/ability/${k}.png`]:[`img/ability/${k}.png`,''];
 (async()=>{U=await load();if(!U)return;
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
   if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
@@ -73,7 +75,7 @@ ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra
   const st=A('strengthen');
   $('#fx').innerHTML=fxs.map(([x,l])=>`<label><input type="checkbox" data-fx="${x}" ${FX[x]?'checked':''}> ${l}</label>`).join('')+(st?`<label><input type="checkbox" data-fx="STR" ${STR?'checked':''}> 공격력 업 (체력 ${st.threshold_percent}% 이하)</label>`:'');
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));
-  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3><div class="ag">`+G.ab.map(a=>`<div class="ab ${a.src||''}">${img(`img/ability/${a.key}.png`,a.key)}<div>${abil(a)}<i>img/ability/${a.key}.png</i></div></div>`).join('')+'</div>':'';
+  $('#ab').innerHTML=G.ab.length?`<h3>능력</h3><div class="ag">`+G.ab.map(a=>`<div class="ab ${a.src||''}">${img(ip(a.key)[0],a.key,ip(a.key)[1])}<div>${abil(a)}<i>${ip(a.key)[0]}</i></div></div>`).join('')+'</div>':'';
   document.querySelectorAll('.tr').forEach(r=>{const on=r.dataset.u==='1'?ST.TU:ST.TN,i=r.querySelector('input');
     r.classList.toggle('off',!on);r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
   if($('#tls'))$('#tls').textContent=ST.TN||ST.TU?'· '+[ST.TN&&'본능',ST.TU&&'초본능'].filter(Boolean).join('+')+' 적용':'';
