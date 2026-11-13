@@ -1,5 +1,5 @@
 let allUnits = [];
-let currentUnit = null;
+let currentUnitId = null;
 let currentFormKey = "1";
 let currentLevel = 30;
 
@@ -24,14 +24,61 @@ async function init() {
   try {
     const res = await fetch("./data/units.json");
     allUnits = await res.json();
-    renderList();
+    
     initAutocomplete();
+    
+    // URL에 특정 유닛이 지정되어 있으면 곧바로 상세 페이지로 진입 (예: ?id=0 또는 해시)
+    checkRoute();
+    window.addEventListener("popstate", checkRoute);
+
   } catch (err) {
     document.getElementById("resultCount").textContent = "units.json 로드 실패: " + err.message;
   }
 }
 
-// 필터링 및 렌더링 (기본적으로 1진 형태 기준 표시)
+// URL 상태를 감지하여 메인 화면을 보여줄지, 상세 페이지를 보여줄지 결정
+function checkRoute() {
+  const params = new URLSearchParams(window.location.search);
+  const unitIdParam = params.get("id");
+
+  if (unitIdParam !== null) {
+    showDetailView(Number(unitIdParam), false);
+  } else {
+    showMainView(false);
+  }
+}
+
+function showMainView(pushHistory = true) {
+  document.getElementById("detailView").classList.add("hidden");
+  document.getElementById("mainView").classList.remove("hidden");
+  window.scrollTo(0, 0);
+  if (pushHistory) {
+    history.pushState({}, "", window.location.pathname);
+  }
+  renderList();
+}
+
+function showDetailView(unitId, pushHistory = true) {
+  const unit = allUnits.find(u => u.id === unitId);
+  if (!unit) return;
+
+  currentUnitId = unitId;
+  const formKeys = Object.keys(unit.forms);
+  currentFormKey = formKeys[0]; // 기본 1형태
+  currentLevel = 30;
+
+  renderDetailContent();
+
+  document.getElementById("mainView").classList.add("hidden");
+  document.getElementById("detailView").classList.remove("hidden");
+  window.scrollTo(0, 0);
+
+  if (pushHistory) {
+    history.pushState({ id: unitId }, "", `?id=${unitId}`);
+  }
+}
+
+// 필터링 및 렌더링
 function renderList() {
   const query = document.getElementById("searchInput").value.trim().toLowerCase();
   const rarity = document.getElementById("rarityFilter").value;
@@ -69,18 +116,16 @@ function renderList() {
   grid.innerHTML = filtered.slice(0, 100).map(unit => {
     const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
     
-    // 속성 아이콘 + 텍스트 렌더링
     const traitsHtml = (form1.traits || [])
       .map(t => `<span class="badge trait-${t}"><img src="assets/img/traits/${t}.png" class="icon-sm" onerror="this.style.display='none'"> ${TRAIT_MAP[t] || t}</span>`).join("");
 
     return `
-      <div class="unit-card" onclick="openUnitModal(${unit.id})">
+      <div class="unit-card" onclick="showDetailView(${unit.id})">
         <div class="card-top">
           <span class="unit-id">No.${String(unit.id).padStart(3, "0")}</span>
           <span class="unit-rarity">${form1.rarity}</span>
         </div>
         <div class="unit-img-wrap">
-          <!-- 폴더 구조: assets/img/캐릭터ID/1.png -->
           <img src="assets/img/${unit.id}/1.png" alt="${form1.name}" loading="lazy" onerror="this.style.display='none'" />
         </div>
         <div class="unit-name">${form1.name}</div>
@@ -90,84 +135,18 @@ function renderList() {
   }).join("");
 }
 
-// 실시간 자동완성 검색 드롭다운 로직
-function initAutocomplete() {
-  const searchInput = document.getElementById("searchInput");
-  const listContainer = document.getElementById("autocompleteList");
+// 상세 페이지 내부 내용 렌더링
+function renderDetailContent() {
+  const unit = allUnits.find(u => u.id === currentUnitId);
+  if (!unit) return;
 
-  searchInput.addEventListener("input", (e) => {
-    const keyword = e.target.value.trim().toLowerCase();
-    renderList(); // 메인 리스트도 필터링
-
-    if (!keyword) {
-      listContainer.classList.add("hidden");
-      listContainer.innerHTML = "";
-      return;
-    }
-
-    const matched = allUnits.filter(unit => {
-      const forms = Object.values(unit.forms);
-      return String(unit.id) === keyword || forms.some(f => f.name.toLowerCase().includes(keyword));
-    }).slice(0, 8); // 최대 8개까지만 추천
-
-    if (matched.length === 0) {
-      listContainer.classList.add("hidden");
-      return;
-    }
-
-    listContainer.innerHTML = matched.map(unit => {
-      const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
-      return `
-        <div class="autocomplete-item" onclick="selectAutocomplete(${unit.id}, '${form1.name}')">
-          <img src="assets/img/${unit.id}/1.png" onerror="this.style.display='none'" />
-          <div>
-            <span class="ac-id">No.${String(unit.id).padStart(3, "0")}</span>
-            <span class="ac-name">${form1.name}</span>
-            <span class="ac-rarity">(${form1.rarity})</span>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    listContainer.classList.remove("hidden");
-  });
-
-  // 바깥 영역 누르면 자동완성 닫기
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".search-container")) {
-      listContainer.classList.add("hidden");
-    }
-  });
-}
-
-function selectAutocomplete(unitId, name) {
-  document.getElementById("searchInput").value = name;
-  document.getElementById("autocompleteList").classList.add("hidden");
-  renderList();
-  openUnitModal(unitId);
-}
-
-// 상세 모달 열기 (1~4형태 탭 및 속성/능력 아이콘 반영)
-function openUnitModal(unitId) {
-  currentUnit = allUnits.find(u => u.id === unitId);
-  if (!currentUnit) return;
-
-  const formKeys = Object.keys(currentUnit.forms);
-  currentFormKey = formKeys[0]; // 기본 모달 열었을 때도 1형태 기준
-  currentLevel = 30;
-
-  renderModalContent();
-  document.getElementById("unitModal").classList.remove("hidden");
-}
-
-function renderModalContent() {
-  const formKeys = Object.keys(currentUnit.forms);
-  const form = currentUnit.forms[currentFormKey];
+  const formKeys = Object.keys(unit.forms);
+  const form = unit.forms[currentFormKey];
 
   document.getElementById("formTabs").innerHTML = formKeys.map(k => `
     <button class="tab-btn ${k === currentFormKey ? "active" : ""}" 
             onclick="switchForm('${k}')">
-      ${k}형태 (${currentUnit.forms[k].name})
+      ${k}형태 (${unit.forms[k].name})
     </button>
   `).join("");
 
@@ -179,7 +158,6 @@ function renderModalContent() {
   const cdSec = (form.cooldownFrames / form.fps).toFixed(2);
   const rangesText = (form.actualRanges || []).map(r => r.text).join(" / ");
 
-  // 특수 능력 및 아이콘 렌더링
   const abilitiesHtml = (form.abilities || []).map(ab => `
     <li>
       <img src="assets/img/abilities/${ab.key}.png" class="icon-sm" onerror="this.style.display='none'">
@@ -187,12 +165,11 @@ function renderModalContent() {
     </li>
   `).join("");
 
-  document.getElementById("modalBody").innerHTML = `
-    <div class="modal-header-flex">
-      <!-- 폴더 구조: assets/img/캐릭터ID/형태번호.png -->
-      <img src="assets/img/${currentUnit.id}/${currentFormKey}.png" alt="${form.name}" class="modal-unit-img" onerror="this.style.display='none'" />
+  document.getElementById("detailBody").innerHTML = `
+    <div class="detail-header-flex">
+      <img src="assets/img/${unit.id}/${currentFormKey}.png" alt="${form.name}" class="detail-unit-img" onerror="this.style.display='none'" />
       <div>
-        <h2>[No.${String(currentUnit.id).padStart(3, "0")}] ${form.name} <small>(${form.rarity})</small></h2>
+        <h2>[No.${String(unit.id).padStart(3, "0")}] ${form.name} <small>(${form.rarity})</small></h2>
         <p class="desc">${form.description.replace(/\n/g, "<br>")}</p>
       </div>
     </div>
@@ -217,19 +194,76 @@ function renderModalContent() {
 
 function switchForm(formKey) {
   currentFormKey = formKey;
-  renderModalContent();
+  renderDetailContent();
 }
 
 function updateLevel(val) {
   currentLevel = Number(val);
-  renderModalContent();
+  renderDetailContent();
 }
+
+// 자동완성 검색 로직
+function initAutocomplete() {
+  const searchInput = document.getElementById("searchInput");
+  const listContainer = document.getElementById("autocompleteList");
+
+  searchInput.addEventListener("input", (e) => {
+    const keyword = e.target.value.trim().toLowerCase();
+    renderList();
+
+    if (!keyword) {
+      listContainer.classList.add("hidden");
+      listContainer.innerHTML = "";
+      return;
+    }
+
+    const matched = allUnits.filter(unit => {
+      const forms = Object.values(unit.forms);
+      return String(unit.id) === keyword || forms.some(f => f.name.toLowerCase().includes(keyword));
+    }).slice(0, 8);
+
+    if (matched.length === 0) {
+      listContainer.classList.add("hidden");
+      return;
+    }
+
+    listContainer.innerHTML = matched.map(unit => {
+      const form1 = unit.forms["1"] || Object.values(unit.forms)[0];
+      return `
+        <div class="autocomplete-item" onclick="selectAutocomplete(${unit.id}, '${form1.name}')">
+          <img src="assets/img/${unit.id}/1.png" onerror="this.style.display='none'" />
+          <div>
+            <span class="ac-id">No.${String(unit.id).padStart(3, "0")}</span>
+            <span class="ac-name">${form1.name}</span>
+            <span class="ac-rarity">(${form1.rarity})</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    listContainer.classList.remove("hidden");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-container")) {
+      listContainer.classList.add("hidden");
+    }
+  });
+}
+
+function selectAutocomplete(unitId, name) {
+  document.getElementById("searchInput").value = name;
+  document.getElementById("autocompleteList").classList.add("hidden");
+  showDetailView(unitId);
+}
+
+// 뒤로가기 버튼 이벤트 연결
+document.getElementById("backBtn").addEventListener("click", () => {
+  showMainView();
+});
 
 ["rarityFilter", "traitFilter", "abilityFilter"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderList);
-});
-document.getElementById("closeModal").addEventListener("click", () => {
-  document.getElementById("unitModal").classList.add("hidden");
 });
 
 init();
