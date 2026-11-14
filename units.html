@@ -2,28 +2,63 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>도감 · 냥코연구소</title><link rel="stylesheet" href="style.css"></head><body>
 <div id="hd"></div>
-<main class="wide"><div class="ctl2"><select id="fm"></select><select id="rr"></select><span id="cnt">불러오는 중…</span></div>
+<main class="wide">
+<div class="fp"><div class="fh"><b>검색 필터</b><span class="fs"><button id="bor" class="on">OR</button><button id="band">AND</button><button id="binc">본능/초본능 포함</button><button id="brs">초기화</button><button id="bfold">접기 ▴</button></span></div><div id="fb"></div></div>
+<div class="ctl2"><select id="fm"></select><select id="st"></select><button id="sd">▲ 오름차순</button><span id="cnt">불러오는 중…</span></div>
 <div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></main>
 <script src="common.js"></script>
 <script>
-$('#hd').innerHTML=header('');
-const COLS=[['cost','코스트'],['rng','사거리'],['hp','체력'],['atk','공격력'],['dps','DPS'],['spd','이동속도'],['cd','쿨타임'],['cyc','공격 주기']];
+$('#hd').innerHTML=header('');attachSuggest($('.sf input'));
+const RO=['기본','EX','레어','슈퍼 레어','울트라 슈퍼 레어','레전드 레어'],SH=['기본','EX','레어','슈퍼','울트라','레전드'];
+const TC={red:['빨','#e8481c'],floating:['떠','#7aa04a'],black:['검','#3a3a3a'],metal:['메','#8f949b'],angel:['천','#c9b73a'],alien:['에','#4cc6b4'],zombie:['좀','#9b3fc4'],relic:['고','#6b7a2a'],aku:['악','#3b7bd4'],traitless:['무','#a9b3c6']};
+const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
+const OA=['weaken','freeze','slow','attack_only','strong','resistant','insanely_tough','massive_damage','insane_damage','knockback','warp','curse','dodge','strengthen','survive','base_destroyer','critical','metal_killer','zombie_killer','soulstrike','witch_killer','eva_killer','barrier_breaker','shield_piercer','savage_blow','double_bounty','metal','mini_wave','wave','mini_surge','surge','explosion','counter_surge','wave_blocker','conjure','production_speed','colossus_slayer','behemoth_slayer','sage_slayer','weaken_immune','freeze_immune','slow_immune','knockback_immune','wave_immune','surge_immune','explosion_immune','warp_immune','curse_immune','toxic_immune','drain_immune','boss_wave_immune','timed_life','single','area','long_distance','omni_strike','multi_hit','limited_attacks'];
+const GTYPE=['single','area','long_distance','omni_strike','multi_hit','limited_attacks'],GRES=['t18','t19','t20','t21','t22','t54','t30','t52'],GEFF=['weaken','freeze','slow','knockback','warp','curse'];
+const COLS=[['cost','코스트'],['rng','사거리'],['hp','체력'],['atk','공격력'],['dps','DPS'],['spd','이동속도'],['cd','쿨타임'],['cyc','공격 주기'],['rar','등급']];
+const SORTS=[['id','번호순'],...COLS.map(([k,l])=>[k,l+'순'])];
 const pad=id=>String(id).padStart(3,'0'),sc=v=>v.toFixed(2)+'초';
-let U=[],R=[],FORM='last',RAR='',SORT='id',DIR=1;
+let U=[],R=[],LAB={},FORM='last',SORT='id',DIR=1,MODE='or',INC=false,COND={R:new Set(),T:new Set(),A:new Set()};
+const TA=new Map(),tab=u=>TA.get(u)||(TA.set(u,tAbs(u)),TA.get(u));
+const hasA=(r,k)=>r.f.abilities.some(a=>a.key===k)||(INC&&+r.k>=3&&tab(r.u).s.has(k));
+const hasT=(r,t)=>r.f.traits.includes(t)||(INC&&+r.k>=3&&tab(r.u).tr.has(t));
+function pass(r){const c=[];if(COND.R.size)c.push(()=>COND.R.has(r.f.rarity));COND.T.forEach(t=>c.push(()=>hasT(r,t)));COND.A.forEach(a=>c.push(()=>hasA(r,a)));
+  return !c.length||(MODE==='or'?c.some(g=>g()):c.every(g=>g()))}
 const mkrow=u=>{const k=FORM==='last'||!u.forms[FORM]?lastK(u):FORM,f=u.forms[k],S=stats(f,f.maxBaseLevel||1,0);
-  return{u,k,f,id:u.id,cost:f.cost,rng:f.recognitionRange,hp:S.hp,atk:S.atk,dps:S.dps,spd:f.speed,cd:f.cooldownFrames/(f.fps||30),cyc:sec(f)}};
-const fmt={cost:v=>v?n(v):'-',rng:v=>v,hp:n,atk:n,dps:v=>v?n(v):'-',spd:v=>v,cd:sc,cyc:sc};
+  return{u,k,f,id:u.id,cost:f.cost,rng:f.recognitionRange,hp:S.hp,atk:S.atk,dps:S.dps,spd:f.speed,cd:f.cooldownFrames/(f.fps||30),cyc:sec(f),rar:RO.indexOf(f.rarity)}};
+const fmt={cost:v=>v?n(v):'-',rng:v=>v,hp:n,atk:n,dps:v=>v?n(v):'-',spd:v=>v,cd:sc,cyc:sc,rar:v=>SH[v]??'-'};
 const miss=r=>(SORT==='cost'||SORT==='dps')&&!r[SORT];
 function draw(){
-  const L=R.filter(r=>!RAR||r.f.rarity===RAR).sort((a,b)=>miss(a)-miss(b)||(a[SORT]-b[SORT])*DIR||a.id-b.id);
-  $('#cnt').textContent=`${L.length}종 · 최대 레벨 기준`;
-  $('#th').innerHTML=`<tr><th data-s="id" class="${SORT==='id'?'on':''}">캐릭터${SORT==='id'?(DIR>0?' ▲':' ▼'):''}</th>${COLS.map(([k,l])=>`<th data-s="${k}" class="${SORT===k?'on':''}">${l}${SORT===k?(DIR>0?' ▲':' ▼'):''}</th>`).join('')}</tr>`;
+  const L=R.filter(pass).sort((a,b)=>miss(a)-miss(b)||(a[SORT]-b[SORT])*DIR||a.id-b.id),ar=DIR>0?' ▲':' ▼';
+  $('#cnt').textContent=`${L.length}종 · 최대 레벨 기준`;$('#st').value=SORT;$('#sd').textContent=DIR>0?'▲ 오름차순':'▼ 내림차순';
+  $('#th').innerHTML=`<tr><th data-s="id" class="${SORT==='id'?'on':''}">캐릭터${SORT==='id'?ar:''}</th>${COLS.map(([k,l])=>`<th data-s="${k}" class="${SORT===k?'on':''}">${l}${SORT===k?ar:''}</th>`).join('')}</tr>`;
   $('#tb').innerHTML=L.map(r=>`<tr data-h="unit.html?id=${r.id}&f=${r.k}"><td><div class="tn"><div class="pt">${r.id}<img src="img/u/${r.id}/${r.k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(r.f.name)}</div><div class="id">#${pad(r.id)}</div></div></div></td>${COLS.map(([k])=>`<td>${fmt[k](r[k])}</td>`).join('')}</tr>`).join('')
 }
+const fic=k=>TXT[k]?TXT[k]:ICON[k]?`<img src="img/i/${ICON[k]}.png" alt="" onerror="this.outerHTML='${(LAB[k]||k)[0]}'">`:(LAB[k]||k)[0];
+const fbtn=k=>`<button class="fi" data-a="${k}" title="${esc(LAB[k]||k)}">${fic(k)}</button>`;
+function panel(){
+  const keys=new Set();for(const u of U){for(const f of Object.values(u.forms))for(const a of f.abilities){keys.add(a.key);LAB[a.key]=a.label_ko}
+    for(const t of u.talents||[]){const k=({10:'strengthen',13:'critical',50:'savage_blow',17:'wave',62:'mini_wave',56:'surge',65:'mini_surge',67:'explosion'})[t.abilityId]||TK[t.abilityId]||'t'+t.abilityId;if(!TT[t.abilityId]&&![32,71,31,70,25,26,27,61].includes(t.abilityId)){keys.add(k);LAB[k]=LAB[k]||t.label}}}
+  const has=k=>keys.has(k),imm=OA.filter(k=>/_immune$/.test(k)&&has(k)),eff=GEFF.filter(has),typ=GTYPE.filter(has),res=GRES.filter(has);
+  const used=new Set([...imm,...eff,...typ,...res]),abl=[...OA,...[...keys].filter(k=>!OA.includes(k))].filter(k=>has(k)&&!used.has(k));
+  const sec=(t,a)=>a.length?`<div class="fsec"><h4>${t}</h4><div class="fg">${a.map(fbtn).join('')}</div></div>`:'';
+  $('#fb').innerHTML=`<div class="fsec"><h4>레어도</h4><div class="fr">${RO.map(r=>`<button class="fr1" data-r="${r}">${r}</button>`).join('')}</div></div>
+<div class="fsec"><h4>타겟</h4><div class="fg">${Object.keys(TC).map(t=>`<button class="tc" data-t="${t}" title="${TR[t]}" style="background:${TC[t][1]}">${TC[t][0]}<img src="img/i/${ICONID[TTID[t]]}.png" alt="" onerror="this.remove()"></button>`).join('')}</div></div>
+<div class="fsec"><h4>효과/능력</h4></div>${sec('효과',eff)}${sec('능력',abl)}${sec('무효',imm)}${sec('내성',res)}${sec('공격 타입',typ)}`
+}
+const sync=()=>{document.querySelectorAll('#fb [data-r]').forEach(b=>b.classList.toggle('on',COND.R.has(b.dataset.r)));
+  document.querySelectorAll('#fb [data-t]').forEach(b=>b.classList.toggle('on',COND.T.has(b.dataset.t)));
+  document.querySelectorAll('#fb [data-a]').forEach(b=>b.classList.toggle('on',COND.A.has(b.dataset.a)));
+  $('#bor').classList.toggle('on',MODE==='or');$('#band').classList.toggle('on',MODE==='and');$('#binc').classList.toggle('on',INC)};
 (async()=>{U=await load();if(!U)return;
-  $('#fm').innerHTML='<option value="last">최종 폼</option>'+[1,2,3,4].map(i=>`<option value="${i}">${i}폼</option>`).join('');
-  $('#rr').innerHTML='<option value="">등급 전체</option>'+[...new Set(U.flatMap(u=>Object.values(u.forms).map(f=>f.rarity)))].map(x=>`<option>${esc(x)}</option>`).join('');
-  $('#fm').onchange=e=>{FORM=e.target.value;R=U.map(mkrow);draw()};$('#rr').onchange=e=>{RAR=e.target.value;draw()};
+  $('#fm').innerHTML='<option value="last">최종 진</option>'+[1,2,3,4].map(i=>`<option value="${i}">${i}진</option>`).join('');
+  $('#st').innerHTML=SORTS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+  panel();
+  $('#fm').onchange=e=>{FORM=e.target.value;R=U.map(mkrow);draw()};
+  $('#st').onchange=e=>{SORT=e.target.value;draw()};$('#sd').onclick=()=>{DIR=-DIR;draw()};
+  $('#bor').onclick=()=>{MODE='or';sync();draw()};$('#band').onclick=()=>{MODE='and';sync();draw()};$('#binc').onclick=()=>{INC=!INC;sync();draw()};
+  $('#brs').onclick=()=>{COND.R.clear();COND.T.clear();COND.A.clear();sync();draw()};
+  $('#bfold').onclick=()=>{const h=$('#fb').hidden=!$('#fb').hidden;$('#bfold').textContent=h?'펼치기 ▾':'접기 ▴'};
+  $('#fb').onclick=e=>{const b=e.target.closest('button');if(!b)return;const [s,v]=b.dataset.r!=null?[COND.R,b.dataset.r]:b.dataset.t!=null?[COND.T,b.dataset.t]:[COND.A,b.dataset.a];s.has(v)?s.delete(v):s.add(v);sync();draw()};
   $('#th').onclick=e=>{const h=e.target.closest('th');if(!h)return;const s=h.dataset.s;DIR=SORT===s?-DIR:1;SORT=s;draw()};
   $('#tb').onclick=e=>{const t=e.target.closest('tr');if(t)location.href=t.dataset.h};
   R=U.map(mkrow);draw()})()
