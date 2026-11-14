@@ -18,7 +18,7 @@ const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,rel
 const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
 const tIcon=t=>{const id=t.abilityId,k=TKEY[id]||TK[id]||'t'+id;return ICONID[id]?[`img/i/${ICONID[id]}.png`,`img/ability/${k}.png`]:ip(k)};
 const ip=k=>ICON[k]?[`img/i/${ICON[k]}.png`,`img/ability/${k}.png`]:[`img/ability/${k}.png`,''];
-$('#hd').innerHTML=header('');
+$('#hd').innerHTML=header('');attachSuggest($('.sf input'));
 (async()=>{U=await load();if(!U)return;
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
   if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
@@ -35,7 +35,7 @@ function build(){
   const chip=(x,l)=>`<button class="chip${EN.has(x)?' on':''}" data-e="${x}">${esc(l)}</button>`;
   document.title=`${f.name} · 냥코연구소`;
   $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
-<div class="hd">${img(`img/u/${u.id}/${k-1}.png`,u.id)}<div><h1>${esc(f.name)}</h1><div class="cd">#${pad(u.id)} · ${k}폼</div></div></div>
+<div class="hd">${img(`img/u/${u.id}/${k-1}.png`,u.id)}<div><h1>${esc(f.name)}</h1><div class="cd">#${pad(u.id)} · ${k}진</div></div></div>
 <div id="tg"></div><p class="ds">${esc(f.description).replace(/\n/g,'<br>')}</p>
 <h3>레벨</h3><div class="lc"><label>기본 레벨 <b id="bv"></b><input type="range" id="bs" min="1" max="${mb}" value="${B}"></label>
 ${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
@@ -101,7 +101,7 @@ ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra
   history.replaceState(null,'',`?id=${u.id}&f=${k}&b=${B}&p=${P}`)
 }
 function chart(S,c){
-  const W=360,H=300,L=46,R=12,T=14,Bm=30,X=rangeX(f,G),Y=rangeMin(f,G),span=X-Y||1,N=Math.min(320,span),pts=[],fp=f.fps||30,sc=MODE==='atk'?G.cyc/fp:1;
+  const W=360,H=230,L=48,R=12,T=14,Bm=28,X=rangeX(f,G),Y=rangeMin(f,G),span=X-Y||1,N=Math.min(320,span),pts=[],fp=f.fps||30,sc=MODE==='atk'?G.cyc/fp:1;
   for(let i=0;i<=N;i++){const d=X-span*i/N;pts.push([d,dps(f,G,S,d,true,c)*sc,dps(f,G,S,d,false,c)*sc])}
   const M=Math.max(1,...pts.map(p=>p[1]))*1.4,sx=d=>L+(X-d)/span*(W-L-R),sy=v=>T+(1-v/M)*(H-T-Bm);
   CH={S,c,X,Y,span,sx,sy,W,L,R,sc};
