@@ -90,3 +90,4 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:rgba(255,138,43,.1)}tbody t
 .ab.normal,.ab.ultra{border-color:var(--line)}.ib.normal,.ib.ultra{border-color:transparent}.ib,.ab .pt{margin:3px}
 .tc img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:6px}
 .tr input:disabled{opacity:.35}
+.pt.tx{font-size:22px;font-weight:900;color:var(--tx)}.tc.sp{font-size:14px}
