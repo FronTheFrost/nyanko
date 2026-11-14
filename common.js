@@ -30,10 +30,10 @@ function derive(u,k,f,st){
     const v=t.levels[l].values,id=t.abilityId,s=t.kind,mk=x=>g.mod[x]=(s==='ultra'||g.mod[x]==='ultra')?'ultra':'normal';
     if(id===32||id===71){g.hp*=1+v[0]/100;mk('hp')}
     else if(id===31){g.atk=g.atk.map(a=>a*(1+v[0]/100));mk('atk')}
-    else if(id===25)g.cost=Math.max(0,g.cost-v[0]);
+    else if(id===25)g.cost=Math.max(0,g.cost-v[0]*1.5);
     else if(id===26)g.cd=Math.max(60,g.cd-v[0]);
     else if(id===27)g.spd+=v[0];
-    else if(id===61){g.tba=Math.max(1,g.tba-2*v[0]);g.cyc=f.attackAnimationAvailable?lh+Math.max(bk,g.tba):g.cyc-2*v[0]}
+    else if(id===61){const t0=g.tba;g.tba=2*Math.max(1,Math.floor(f.rawAttackInterval*(100-v[0])/100))-1;g.cyc=f.attackAnimationAvailable?lh+Math.max(bk,g.tba):g.cyc-(t0-g.tba)}
     else if(id===10){const a=get('strengthen');up('strengthen','공격력 업',{threshold_percent:v[0]>0?v[0]:(a?.threshold_percent||0),boost_percent:(a?.boost_percent||0)+v[1]},s)}
     else if(id===13)up('critical','크리티컬',{chance:(get('critical')?.chance||0)+v[0]},s);
     else if(id===50){const a=get('savage_blow');up('savage_blow','혼신의 일격',{chance:(a?.chance||0)+v[0],boost_percent:v[1]>0?v[1]:(a?.boost_percent||0)},s)}
