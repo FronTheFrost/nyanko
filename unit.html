@@ -13,7 +13,9 @@ const TC={red:['빨','#e8481c'],floating:['떠','#7aa04a'],black:['검','#3a3a3a
 const TKEY={10:'strengthen',13:'critical',50:'savage_blow',17:'wave',62:'mini_wave',56:'surge',65:'mini_surge',67:'explosion'};
 const IMM=k=>/_immune$/.test(k),RES=k=>/^t(18|19|20|21|22|30|52|54)$/.test(k);
 
-const aImg=k=>{const p=ip(k);return img(p[0],k,p[1])};
+const aImg=(k,src)=>{const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
+const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
+const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
 const tIcon=t=>{const id=t.abilityId,k=TKEY[id]||TK[id]||'t'+id;return ICONID[id]?[`img/i/${ICONID[id]}.png`,`img/ability/${k}.png`]:ip(k)};
 const ip=k=>ICON[k]?[`img/i/${ICON[k]}.png`,`img/ability/${k}.png`]:[`img/ability/${k}.png`,''];
 $('#hd').innerHTML=header('');
@@ -27,7 +29,7 @@ function build(){
   const mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,ev=f.evolution||{},tl=+k>=3?(u.talents||[]):[],hasU=tl.some(t=>t.kind==='ultra');
   const mats=(ev.materials||[]).map(m=>`<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`).join('');
   const trow=t=>{const ti=tIcon(t);return`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><div class="trh">${img(ti[0],'',ti[1]).replace('class="pt"','class="pt sm"')}<b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span></div><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`};
-  const tc=x=>`<button class="tc${EN.has(x)?' on':''}" data-e="${x}" title="${TR[x]}" style="background:${TC[x][1]}">${TC[x][0]}</button>`;
+  const tc=x=>`<button class="tc${EN.has(x)?' on':''}" data-e="${x}" title="${TR[x]}" style="background:${TC[x][1]}">${TC[x][0]}<img src="img/i/${ICONID[TTID[x]]}.png" alt="" onerror="this.remove()"></button>`;
   const chip=(x,l)=>`<button class="chip${EN.has(x)?' on':''}" data-e="${x}">${esc(l)}</button>`;
   document.title=`${f.name} · 냥코연구소`;
   $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
@@ -62,7 +64,7 @@ function update(){
   G=derive(u,k,f,ST);const S=stats(f,B,P,G),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
   const c=mkctx(G,EN,STR),c0={...c,cc:0,sc:0},ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
   $('#bv').textContent=`${B} / ${mb}`;if(mp)$('#pv').textContent=`+${P} / ${mp}`;
-  $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`+G.tr.map(t=>`<span class="tag">${esc(TR[t]||t)}</span>`).join('');
+  $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`;
   // 공격력 칸: 스위치로 켠 확률 효과는 '발동했다고 가정'
   const cr=A('critical'),sv=A('savage_blow'),sb=sv?sv.boost_percent/100:0;
   const shown=S.hits.map((h,i)=>{if(!h)return 0;const a=ap(i+1),crit=FX.critical&&cr&&a;
@@ -85,12 +87,12 @@ ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra
   $('#fx').innerHTML=fxs.map(([x,l])=>`<label><input type="checkbox" data-fx="${x}" ${FX[x]?'checked':''}> ${l}</label>`).join('')+(st?`<label><input type="checkbox" data-fx="STR" ${STR?'checked':''}> 공격력 업 (체력 ${st.threshold_percent}% 이하)</label>`:'');
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));
   const P0=FPof(G,EN),eff=G.ab.filter(a=>!IMM(a.key)&&!RES(a.key)),imm=G.ab.filter(a=>IMM(a.key)),res=G.ab.filter(a=>RES(a.key));
-  const ic=a=>`<div class="ib ${a.src||''}" title="${esc(a.label_ko)}">${aImg(a.key)}${RES(a.key)&&a.txt?`<small>${esc(a.txt)}</small>`:''}</div>`;
-  $('#ab').innerHTML=(eff.length?`<h3>효과/능력</h3><div class="ag">${eff.map(a=>`<div class="ab ${a.src||''}">${aImg(a.key)}<div><b>${esc(a.label_ko)}</b>${det(a,P0)?`<i>${det(a,P0)}</i>`:''}</div></div>`).join('')}</div>`:'')
+  const ic=a=>`<div class="ib ${a.src||''}" title="${esc(a.label_ko)}">${aImg(a.key,a.src)}${RES(a.key)&&a.txt?`<small>${esc(a.txt)}</small>`:''}</div>`;
+  $('#ab').innerHTML=(G.tr.length?`<h3>속성 대항</h3><div class="ic">${G.tr.map(trI).join('')}</div>`:'')+(eff.length?`<h3>효과/능력</h3><div class="ag">${eff.map(a=>`<div class="ab ${a.src||''}">${aImg(a.key,a.src)}<div><b>${esc(a.label_ko)}</b>${det(a,P0)?`<i>${det(a,P0)}</i>`:''}</div></div>`).join('')}</div>`:'')
    +(imm.length?`<h3>무효</h3><div class="ic">${imm.map(ic).join('')}</div>`:'')+(res.length?`<h3>내성</h3><div class="ic">${res.map(ic).join('')}</div>`:'');
   document.querySelectorAll('.tc').forEach(b=>b.classList.toggle('mine',G.tr.includes(b.dataset.e)));
   document.querySelectorAll('.tr').forEach(r=>{const on=r.dataset.u==='1'?ST.TU:ST.TN,i=r.querySelector('input');
-    r.classList.toggle('off',!on);r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
+    r.classList.toggle('off',!on);i.disabled=!on;r.querySelector('.tv').textContent=`Lv ${i.value} / ${i.max}`});
   if($('#tls'))$('#tls').textContent=ST.TN||ST.TU?'· '+[ST.TN&&'본능',ST.TU&&'초본능'].filter(Boolean).join('+')+' 적용':'';
   $('#ens').textContent=EN.size?'· '+[...EN].map(x=>TR[x]||SP[x][0]).join(', '):'';
   $('#chart').innerHTML=chart(S,c);mark();
