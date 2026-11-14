@@ -13,7 +13,7 @@ const TC={red:['빨','#e8481c'],floating:['떠','#7aa04a'],black:['검','#3a3a3a
 const TKEY={10:'strengthen',13:'critical',50:'savage_blow',17:'wave',62:'mini_wave',56:'surge',65:'mini_surge',67:'explosion'};
 const IMM=k=>/_immune$/.test(k),RES=k=>/^t(18|19|20|21|22|30|52|54)$/.test(k);
 
-const aImg=(k,src)=>{const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
+const aImg=(k,src)=>{if(TXT[k])return`<div class="pt tx${src?' '+src:''}">${TXT[k]}</div>`;const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
 const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
 const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
 const tIcon=t=>{const id=t.abilityId,k=TKEY[id]||TK[id]||'t'+id;return ICONID[id]?[`img/i/${ICONID[id]}.png`,`img/ability/${k}.png`]:ip(k)};
@@ -30,6 +30,8 @@ function build(){
   const mats=(ev.materials||[]).map(m=>`<span class="tag">${esc(m.name||'#'+m.itemId)} ×${m.quantity??1}</span>`).join('');
   const trow=t=>{const ti=tIcon(t);return`<div class="row tr" data-k="${tkey(t)}" data-u="${t.kind==='ultra'?1:0}"><div class="trh">${img(ti[0],'',ti[1]).replace('class="pt"','class="pt sm"')}<b>${esc(t.label)}</b>${t.kind==='ultra'?' <span class="tag r">초본능</span>':''}<span class="tv"></span></div><input type="range" min="0" max="${t.maxLevel}" value="${ST.TL[tkey(t)]??t.maxLevel}"></div>`};
   const tc=x=>`<button class="tc${EN.has(x)?' on':''}" data-e="${x}" title="${TR[x]}" style="background:${TC[x][1]}">${TC[x][0]}<img src="img/i/${ICONID[TTID[x]]}.png" alt="" onerror="this.remove()"></button>`;
+  const SPT={colossus:'초생',behemoth:'초수',sage:'초현',villain:'괴',witch:'마',eva:'사'};
+  const spc=x=>`<button class="tc sp${EN.has(x)?' on':''}" data-e="${x}" title="${SP[x][0]}" style="background:#4a5568">${SPT[x]}<img src="img/i/${SPID[x]}.png" alt="" onerror="this.remove()"></button>`;
   const chip=(x,l)=>`<button class="chip${EN.has(x)?' on':''}" data-e="${x}">${esc(l)}</button>`;
   document.title=`${f.name} · 냥코연구소`;
   $('#app').innerHTML=`<div class="tabs">${Object.keys(u.forms).map(x=>`<button class="tab${x===k?' on':''}" data-k="${x}">${esc(u.forms[x].name)}</button>`).join('')}</div>
@@ -38,7 +40,7 @@ function build(){
 <h3>레벨</h3><div class="lc"><label>기본 레벨 <b id="bv"></b><input type="range" id="bs" min="1" max="${mb}" value="${B}"></label>
 ${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
 ${tl.length?`<details class="dt" id="dtl"${OP.tl?' open':''}><summary>본능 <span id="tls"></span></summary><div class="ml"><label><input type="checkbox" id="tn" ${ST.TN?'checked':''}> 본능 적용</label>${hasU?`<label><input type="checkbox" id="tu" ${ST.TU?'checked':''}> 초본능 적용</label>`:''}</div>${tl.map(trow).join('')}</details>`:''}
-<details class="dt" id="den"${OP.en?' open':''}><summary>대항 속성 <span id="ens"></span></summary><div class="chips">${BA.map(tc).join('')}</div><div class="sub2">특수 속성</div><div class="chips">${Object.entries(SP).map(([x,v])=>chip(x,v[0])).join('')}</div></details>
+<details class="dt" id="den"${OP.en?' open':''}><summary>대항 속성 <span id="ens"></span></summary><div class="chips">${BA.map(tc).join('')}</div><div class="sub2">특수 속성</div><div class="chips">${Object.keys(SP).map(spc).join('')}</div></details>
 <div class="g"><div class="kv big" id="c1"></div><div class="kv big" id="c2"></div>
 <div class="pn" id="dp" hidden><div class="fx" id="fx"></div>
 <div class="ctl"><button class="tab" data-m="dps">실질 DPS 기댓값</button><button class="tab" data-m="atk">공격력 기댓값</button>
