@@ -104,3 +104,18 @@ function det(a,P){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,d
 const header=q=>`<header><div class="bar"><a class="brand" href="index.html">냥코<span>연구소</span></a><form class="sf" action="index.html"><input name="q" type="search" value="${esc(q||'')}" placeholder="유닛 이름 검색" autocomplete="off"></form></div></header>`;
 const TXT={multi_hit:'연',boss_wave_immune:'보',limited_attacks:'1'};
 const SPID={colossus:324,behemoth:325,sage:326,villain:384,witch:327,eva:328};
+
+const nz=s=>String(s).toLowerCase().replace(/\s+/g,''),pad3=id=>String(id).padStart(3,'0');
+const tAbs=u=>{const s=new Set(),tr=new Set();for(const t of u.talents||[]){const id=t.abilityId;if(TT[id])tr.add(TT[id]);
+  else if(![32,71,31,70,25,26,27,61].includes(id))s.add(({10:'strengthen',13:'critical',50:'savage_blow',17:'wave',62:'mini_wave',56:'surge',65:'mini_surge',67:'explosion'})[id]||TK[id]||'t'+id)}return{s,tr}};
+let UP=null;const getU=()=>UP||(UP=fetch('data/units.json').then(r=>r.json()).catch(()=>[]));
+function attachSuggest(inp){
+  const wrap=inp.closest('.sf'),box=document.createElement('div');box.className='sg';box.hidden=true;wrap.appendChild(box);let k=0;
+  inp.addEventListener('input',async()=>{const q=nz(inp.value),my=++k;if(!q){box.hidden=true;return}
+    const U=await getU();if(my!==k)return;const L=[];
+    for(const u of U){const f=Object.values(u.forms).find(f=>nz(f.name).includes(q));if(f)L.push([u,f])}
+    box.innerHTML=L.slice(0,8).map(([u,f])=>`<a href="unit.html?id=${u.id}"><b>${esc(f.name)}</b><small>#${pad3(u.id)}</small></a>`).join('')+(L.length>8?`<a class="mo" href="index.html?q=${encodeURIComponent(inp.value)}">전체 ${L.length}건 보기</a>`:'')||'<div class="no">결과 없음</div>';
+    box.hidden=false});
+  inp.addEventListener('focus',()=>{if(box.innerHTML&&inp.value)box.hidden=false});
+  document.addEventListener('click',e=>{if(!wrap.contains(e.target))box.hidden=true});
+}
