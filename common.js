@@ -29,7 +29,7 @@ function derive(u,k,f,st){
     const l=(t.kind==='ultra'?st.TU:st.TN)?(st.TL[tkey(t)]??t.maxLevel):0;if(!l)continue;
     const v=t.levels[l].values,id=t.abilityId,s=t.kind,mk=x=>g.mod[x]=(s==='ultra'||g.mod[x]==='ultra')?'ultra':'normal';
     if(id===32||id===71){g.hp*=1+v[0]/100;mk('hp')}
-    else if(id===31){g.atk=g.atk.map(a=>a*(1+v[0]/100));mk('atk')}
+    else if(id===31||id===70){g.atk=g.atk.map(a=>a*(1+v[0]/100));mk('atk')}
     else if(id===25)g.cost=Math.max(0,g.cost-v[0]*1.5);
     else if(id===26)g.cd=Math.max(60,g.cd-v[0]);
     else if(id===27)g.spd+=v[0];
@@ -43,6 +43,7 @@ function derive(u,k,f,st){
     else if(id===65)up('mini_surge','소열파',{chance:v[0],level:v[1],anchor:v[2]/4,span:v[3]/4},s);
     else if(id===67)up('explosion','폭파 공격',{chance:v[0],anchor:v[1]/4,span:0,damage_bands_percent:[100,70,40],band_widths:[150,100,100]},s);
     else if([1,2,3,51,60].includes(id)){const key=TK[id],a=get(key),p={chance:(a?.chance||0)+v[0],duration_frames:(a?.duration_frames||0)+v[1]};if(id===1&&!a)p.attack_to_percent=100-v[2];up(key,t.label,p,s)}
+    else if(id===64)up('behemoth_slayer',t.label,{dodge_chance:v[0],dodge_duration_frames:v[1]},s);
     else if([8,11,15,58].includes(id)){const key=TK[id];up(key,t.label,{chance:(get(key)?.chance||0)+v[0]},s)}
     else if(TT[id]){if(!g.tr.includes(TT[id])){g.tr.push(TT[id]);g.trsrc[TT[id]]=s}}
     else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v)},s);
@@ -84,8 +85,8 @@ function dps(f,G,S,d,adj,c){
   return t/(G.cyc/(f.fps||30))
 }
 
-const ICON={"strong":"203","weaken":"195","critical":"201","knockback":"207","weaken_immune":"213","zombie_killer":"260","survive":"199","warp_immune":"262","mini_wave":"293","slow":"198","knockback_immune":"216","barrier_breaker":"264","freeze":"197","freeze_immune":"214","curse_immune":"116","resistant":"204","wave_blocker":"218","massive_damage":"206","wave_immune":"210","double_bounty":"205","wave":"208","slow_immune":"215","strengthen":"196","counter_surge":"315","colossus_slayer":"297","behemoth_slayer":"302","attack_only":"202","sage_slayer":"319","dodge":"231","surge":"239","base_destroyer":"200","soulstrike":"300","curse":"289","toxic_immune":"237","explosion":"335","explosion_immune":"337","surge_immune":"243","mini_surge":"310","savage_blow":"229","shield_piercer":"296","production_speed":"396","t20":"47","t19":"45","t18":"43","t22":"51","t21":"49","t30":"109","t52":"235","t54":"241","single":"217","area":"211","omni_strike":"112"};
-const ICONID={"1":"195","2":"197","3":"198","4":"202","5":"203","6":"204","7":"206","8":"207","9":"266","10":"196","11":"199","12":"200","13":"201","14":"260","15":"264","16":"205","17":"208","18":"43","19":"45","20":"47","21":"49","22":"51","23":"218","24":"53","29":"116","30":"109","44":"213","45":"214","46":"215","47":"216","48":"210","49":"262","50":"229","51":"231","52":"235","53":"237","54":"241","55":"243","56":"239","58":"296","59":"300","60":"289","62":"293","63":"297","64":"302","65":"310","66":"319","67":"335","68":"315","69":"337","72":"396","33":"219","34":"220","35":"221","36":"222","37":"223","38":"224","39":"225","40":"226","57":"294","41":"227"};
+const ICON={"strong":"203","weaken":"195","critical":"201","knockback":"207","weaken_immune":"213","zombie_killer":"260","survive":"199","warp_immune":"262","mini_wave":"293","slow":"198","knockback_immune":"216","barrier_breaker":"264","freeze":"197","freeze_immune":"214","curse_immune":"116","resistant":"204","wave_blocker":"218","massive_damage":"206","wave_immune":"210","double_bounty":"205","wave":"208","slow_immune":"215","strengthen":"196","counter_surge":"315","colossus_slayer":"297","behemoth_slayer":"302","attack_only":"202","sage_slayer":"319","dodge":"231","surge":"239","base_destroyer":"200","soulstrike":"300","curse":"289","toxic_immune":"237","explosion":"335","explosion_immune":"337","surge_immune":"243","mini_surge":"310","savage_blow":"229","shield_piercer":"296","production_speed":"396","t20":"47","t19":"45","t18":"43","t22":"51","t21":"49","t30":"109","t52":"235","t54":"241","single":"217","area":"211","omni_strike":"112","eva_killer":"110","insane_damage":"114","insanely_tough":"122","metal":"209","long_distance":"212","witch_killer":"258","conjure":"317","metal_killer":"321","drain_immune":"391"};
+const ICONID={"1":"195","2":"197","3":"198","4":"202","5":"203","6":"204","7":"206","8":"207","9":"266","10":"196","11":"199","12":"200","13":"201","14":"260","15":"264","16":"205","17":"208","18":"43","19":"45","20":"47","21":"49","22":"51","23":"218","24":"53","29":"116","30":"109","44":"213","45":"214","46":"215","47":"216","48":"210","49":"262","50":"229","51":"231","52":"235","53":"237","54":"241","55":"243","56":"239","58":"296","59":"300","60":"289","62":"293","63":"297","64":"302","65":"310","66":"319","67":"335","68":"315","69":"337","72":"396","33":"219","34":"220","35":"221","36":"222","37":"223","38":"224","39":"225","40":"226","57":"294","41":"227","25":"92","26":"94","27":"96","31":"118","32":"120","61":"305","71":"393","70":"392"};
 
 const SM={colossus_slayer:1.6,behemoth_slayer:2.5,witch_killer:5,eva_killer:5},DUR=['weaken','freeze','slow','curse'],MR={strong:[1.5,1.8],massive_damage:[3,4],insane_damage:[5,6]};
 const rg=(v,f,d)=>{const lo=Math.min(...v),hi=Math.max(...v);return lo===hi?f(lo):d?f(hi)+'~'+f(lo):f(lo)+'~'+f(hi)},fx=(a,b,p)=>a+(b-a)*p/300;
@@ -101,3 +102,5 @@ function det(a,P){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,d
   if(a.level>0&&/wave|surge/.test(a.key))x.push(`Lv.${a.level}`);
   if(/surge|explosion/.test(a.key)&&a.anchor!=null)x.push('생성 '+(a.span>0?`${a.anchor}~${a.anchor+a.span}`:a.anchor));return x.join(' · ')}
 const header=q=>`<header><div class="bar"><a class="brand" href="index.html">냥코<span>연구소</span></a><form class="sf" action="index.html"><input name="q" type="search" value="${esc(q||'')}" placeholder="유닛 이름 검색" autocomplete="off"></form></div></header>`;
+const TXT={multi_hit:'연',boss_wave_immune:'보',limited_attacks:'1'};
+const SPID={colossus:324,behemoth:325,sage:326,villain:384,witch:327,eva:328};
