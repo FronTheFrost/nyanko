@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=v=>Math.round(v).toLocaleString('ko-KR');
-const TR={red:'빨간 적',floating:'떠있는 적',black:'검은 적',metal:'메탈',angel:'천사',alien:'에일리언',zombie:'좀비',relic:'고대종',aku:'악마',traitless:'속성 없음',witch:'마녀',eva:'사도'};
+const TR={red:'빨간 적',floating:'떠있는 적',black:'검은 적',metal:'메탈',angel:'천사',alien:'에일리언',zombie:'좀비',relic:'고대종',aku:'악마',traitless:'무속성',witch:'마녀',eva:'사도'};
 const AF={chance:v=>`확률 ${v}%`,duration_frames:v=>`${(v/30).toFixed(1)}초`,boost_percent:v=>`+${v}%`,threshold_percent:v=>`체력 ${v}% 이하`,hit_count:v=>`${v}연타`,level:v=>`Lv ${v}`,attack_limit:v=>`${v}회 제한`,production_percent:v=>`생산 ${v}%`,attack_to_percent:v=>`공격력 ${v}%로`,dodge_chance:v=>`회피 ${v}%`,dodge_duration_frames:v=>`회피 ${(v/30).toFixed(1)}초`,damage_multiplier:v=>`피해 ${v}배`,received_damage_multiplier:v=>`받는 피해 ${v}배`,current_hp_reduction_percent:v=>`현재 체력 ${v}% 감소`};
 const lastK=u=>String(Math.max(...Object.keys(u.forms)));
 const sec=f=>f.attackCycleFrames/(f.fps||30);
@@ -23,7 +23,7 @@ const tkey=t=>t.kind+t.group;
 const tfmt=(id,v)=>[1,2,3,51,60].includes(id)?`확률 ${v[0]}% · ${(v[1]/30).toFixed(1)}초`:[8,11,15,58].includes(id)?`확률 ${v[0]}%`:[18,19,20,21,22,30,52,54].includes(id)?`${v[0]}% 경감`:'';
 function derive(u,k,f,st){
   const lh=f.lastHitFrame||0,bk=(f.attackAnimationFrames||0)-lh;
-  const g={hp:f.rawHitpoints,atk:f.rawAttacks.slice(),cost:f.cost,cd:f.cooldownFrames,spd:f.speed,tba:2*f.rawAttackInterval-1,lh,bk,cyc:f.attackCycleFrames,ab:f.abilities.map(a=>({...a})),tr:[...f.traits],mod:{}};
+  const g={hp:f.rawHitpoints,atk:f.rawAttacks.slice(),cost:f.cost,cd:f.cooldownFrames,spd:f.speed,tba:2*f.rawAttackInterval-1,lh,bk,cyc:f.attackCycleFrames,ab:f.abilities.map(a=>({...a})),tr:[...f.traits],trsrc:{},mod:{}};
   const get=x=>g.ab.find(a=>a.key===x),up=(key,label,p,src)=>{let a=get(key);if(!a)g.ab.push(a={key,label_ko:label});Object.assign(a,p);a.src=src};
   if(+k>=3)for(const t of u.talents||[]){
     const l=(t.kind==='ultra'?st.TU:st.TN)?(st.TL[tkey(t)]??t.maxLevel):0;if(!l)continue;
@@ -33,16 +33,18 @@ function derive(u,k,f,st){
     else if(id===25)g.cost=Math.max(0,g.cost-v[0]);
     else if(id===26)g.cd=Math.max(60,g.cd-v[0]);
     else if(id===27)g.spd+=v[0];
-    else if(id===61){g.tba=Math.max(1,g.tba-v[0]);g.cyc=f.attackAnimationAvailable?lh+Math.max(bk,g.tba):g.cyc-v[0]}
-    else if(id===10)up('strengthen','공격력 업',{threshold_percent:v[0],boost_percent:v[1]},s);
+    else if(id===61){g.tba=Math.max(1,g.tba-2*v[0]);g.cyc=f.attackAnimationAvailable?lh+Math.max(bk,g.tba):g.cyc-2*v[0]}
+    else if(id===10){const a=get('strengthen');up('strengthen','공격력 업',{threshold_percent:v[0]>0?v[0]:(a?.threshold_percent||0),boost_percent:(a?.boost_percent||0)+v[1]},s)}
     else if(id===13)up('critical','크리티컬',{chance:(get('critical')?.chance||0)+v[0]},s);
-    else if(id===50)up('savage_blow','혼신의 일격',{chance:(get('savage_blow')?.chance||0)+v[0],boost_percent:v[1]},s);
+    else if(id===50){const a=get('savage_blow');up('savage_blow','혼신의 일격',{chance:(a?.chance||0)+v[0],boost_percent:v[1]>0?v[1]:(a?.boost_percent||0)},s)}
     else if(id===17)up('wave','파동 공격',{chance:v[0],level:v[1]},s);
     else if(id===62)up('mini_wave','소파동',{chance:v[0],level:v[1]},s);
     else if(id===56)up('surge','열파 공격',{chance:v[0],level:v[1],anchor:v[2]/4,span:v[3]/4},s);
     else if(id===65)up('mini_surge','소열파',{chance:v[0],level:v[1],anchor:v[2]/4,span:v[3]/4},s);
     else if(id===67)up('explosion','폭파 공격',{chance:v[0],anchor:v[1]/4,span:0,damage_bands_percent:[100,70,40],band_widths:[150,100,100]},s);
-    else if(TT[id]){if(!g.tr.includes(TT[id]))g.tr.push(TT[id])}
+    else if([1,2,3,51,60].includes(id)){const key=TK[id],a=get(key),p={chance:(a?.chance||0)+v[0],duration_frames:(a?.duration_frames||0)+v[1]};if(id===1&&!a)p.attack_to_percent=100-v[2];up(key,t.label,p,s)}
+    else if([8,11,15,58].includes(id)){const key=TK[id];up(key,t.label,{chance:(get(key)?.chance||0)+v[0]},s)}
+    else if(TT[id]){if(!g.tr.includes(TT[id])){g.tr.push(TT[id]);g.trsrc[TT[id]]=s}}
     else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v)},s);
   }
   return g
@@ -96,5 +98,6 @@ function det(a,P){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,d
   else if(a.key==='resistant')x.push('받는 피해 '+rg(P.map(p=>fx(1/4,1/5,p)),v=>'1/'+Math.round(1/v),1));
   else if(a.key==='insanely_tough')x.push('받는 피해 '+rg(P.map(p=>fx(1/6,1/7,p)),v=>'1/'+Math.round(1/v),1));
   else{const m=SM[a.key]??a.damage_multiplier??(a.boost_percent?1+a.boost_percent/100:a.attack_to_percent?a.attack_to_percent/100:0);if(m)x.push(`${+(+m).toFixed(2)}배`)}
-  if(a.level>0&&/wave|surge/.test(a.key))x.push(`Lv.${a.level}`);return x.join(' · ')}
+  if(a.level>0&&/wave|surge/.test(a.key))x.push(`Lv.${a.level}`);
+  if(/surge|explosion/.test(a.key)&&a.anchor!=null)x.push('생성 '+(a.span>0?`${a.anchor}~${a.anchor+a.span}`:a.anchor));return x.join(' · ')}
 const header=q=>`<header><div class="bar"><a class="brand" href="index.html">냥코<span>연구소</span></a><form class="sf" action="index.html"><input name="q" type="search" value="${esc(q||'')}" placeholder="유닛 이름 검색" autocomplete="off"></form></div></header>`;
