@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도감 · 냥코연구소</title><link rel="stylesheet" href="style.css"></head><body>
+<div id="hd"></div>
+<main class="wide"><div class="ctl2"><select id="fm"></select><select id="rr"></select><span id="cnt">불러오는 중…</span></div>
+<div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></main>
+<script src="common.js"></script>
+<script>
+$('#hd').innerHTML=header('');
+const COLS=[['cost','코스트'],['rng','사거리'],['hp','체력'],['atk','공격력'],['dps','DPS'],['spd','이동속도'],['cd','쿨타임'],['cyc','공격 주기']];
+const pad=id=>String(id).padStart(3,'0'),sc=v=>v.toFixed(2)+'초';
+let U=[],R=[],FORM='last',RAR='',SORT='id',DIR=1;
+const mkrow=u=>{const k=FORM==='last'||!u.forms[FORM]?lastK(u):FORM,f=u.forms[k],S=stats(f,f.maxBaseLevel||1,0);
+  return{u,k,f,id:u.id,cost:f.cost,rng:f.recognitionRange,hp:S.hp,atk:S.atk,dps:S.dps,spd:f.speed,cd:f.cooldownFrames/(f.fps||30),cyc:sec(f)}};
+const fmt={cost:v=>v?n(v):'-',rng:v=>v,hp:n,atk:n,dps:v=>v?n(v):'-',spd:v=>v,cd:sc,cyc:sc};
+const miss=r=>(SORT==='cost'||SORT==='dps')&&!r[SORT];
+function draw(){
+  const L=R.filter(r=>!RAR||r.f.rarity===RAR).sort((a,b)=>miss(a)-miss(b)||(a[SORT]-b[SORT])*DIR||a.id-b.id);
+  $('#cnt').textContent=`${L.length}종 · 최대 레벨 기준`;
+  $('#th').innerHTML=`<tr><th data-s="id" class="${SORT==='id'?'on':''}">캐릭터${SORT==='id'?(DIR>0?' ▲':' ▼'):''}</th>${COLS.map(([k,l])=>`<th data-s="${k}" class="${SORT===k?'on':''}">${l}${SORT===k?(DIR>0?' ▲':' ▼'):''}</th>`).join('')}</tr>`;
+  $('#tb').innerHTML=L.map(r=>`<tr data-h="unit.html?id=${r.id}&f=${r.k}"><td><div class="tn"><div class="pt">${r.id}<img src="img/u/${r.id}/${r.k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(r.f.name)}</div><div class="id">#${pad(r.id)}</div></div></div></td>${COLS.map(([k])=>`<td>${fmt[k](r[k])}</td>`).join('')}</tr>`).join('')
+}
+(async()=>{U=await load();if(!U)return;
+  $('#fm').innerHTML='<option value="last">최종 폼</option>'+[1,2,3,4].map(i=>`<option value="${i}">${i}폼</option>`).join('');
+  $('#rr').innerHTML='<option value="">등급 전체</option>'+[...new Set(U.flatMap(u=>Object.values(u.forms).map(f=>f.rarity)))].map(x=>`<option>${esc(x)}</option>`).join('');
+  $('#fm').onchange=e=>{FORM=e.target.value;R=U.map(mkrow);draw()};$('#rr').onchange=e=>{RAR=e.target.value;draw()};
+  $('#th').onclick=e=>{const h=e.target.closest('th');if(!h)return;const s=h.dataset.s;DIR=SORT===s?-DIR:1;SORT=s;draw()};
+  $('#tb').onclick=e=>{const t=e.target.closest('tr');if(t)location.href=t.dataset.h};
+  R=U.map(mkrow);draw()})()
+.catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
+</script></body></html>
