@@ -3,7 +3,7 @@
 <title>도감 · 냥코연구소</title><link rel="stylesheet" href="style.css"></head><body>
 <div id="hd"></div>
 <main class="wide">
-<div class="fp"><div class="fh"><b>검색 필터</b><span class="fs"><button id="bor" class="on">OR</button><button id="band">AND</button><button id="binc">본능/초본능 포함</button><button id="brs">초기화</button><button id="bfold">접기 ▴</button></span></div><div id="fb"></div></div>
+<div class="fp"><div class="fh"><b>검색 필터</b><span class="fs"><button id="bor" class="on">OR</button><button id="band">AND</button><button id="binc">본능/초본능 포함</button><button id="brs">초기화</button><button id="bfold">펼치기 ▾</button></span></div><div id="fb" hidden></div></div>
 <div class="ctl2"><select id="fm"></select><select id="st"></select><button id="sd">▲ 오름차순</button><span id="cnt">불러오는 중…</span></div>
 <div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></main>
 <script src="common.js"></script>
@@ -13,7 +13,7 @@ const RO=['기본','EX','레어','슈퍼 레어','울트라 슈퍼 레어','레�
 const TC={red:['빨','#e8481c'],floating:['떠','#7aa04a'],black:['검','#3a3a3a'],metal:['메','#8f949b'],angel:['천','#c9b73a'],alien:['에','#4cc6b4'],zombie:['좀','#9b3fc4'],relic:['고','#6b7a2a'],aku:['악','#3b7bd4'],traitless:['무','#a9b3c6']};
 const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
 const OA=['weaken','freeze','slow','attack_only','strong','resistant','insanely_tough','massive_damage','insane_damage','knockback','warp','curse','dodge','strengthen','survive','base_destroyer','critical','metal_killer','zombie_killer','soulstrike','witch_killer','eva_killer','barrier_breaker','shield_piercer','savage_blow','double_bounty','metal','mini_wave','wave','mini_surge','surge','explosion','counter_surge','wave_blocker','conjure','production_speed','colossus_slayer','behemoth_slayer','sage_slayer','weaken_immune','freeze_immune','slow_immune','knockback_immune','wave_immune','surge_immune','explosion_immune','warp_immune','curse_immune','toxic_immune','drain_immune','boss_wave_immune','timed_life','single','area','long_distance','omni_strike','multi_hit','limited_attacks'];
-const GTYPE=['single','area','long_distance','omni_strike','multi_hit','limited_attacks'],GRES=['t18','t19','t20','t21','t22','t54','t30','t52'],GEFF=['weaken','freeze','slow','knockback','warp','curse'];
+const GTYPE=['single','area','long_distance','omni_strike','multi_hit','limited_attacks'],GRES=['t18','t19','t20','t21','t22','t54','t30','t52'],GEFF=['weaken','freeze','slow','attack_only','strong','resistant','insanely_tough','massive_damage','insane_damage','knockback','warp','curse','dodge'];
 const COLS=[['cost','코스트'],['rng','사거리'],['hp','체력'],['atk','공격력'],['dps','DPS'],['spd','이동속도'],['cd','쿨타임'],['cyc','공격 주기'],['rar','등급']];
 const SORTS=[['id','번호순'],...COLS.map(([k,l])=>[k,l+'순'])];
 const pad=id=>String(id).padStart(3,'0'),sc=v=>v.toFixed(2)+'초';
@@ -50,7 +50,7 @@ const sync=()=>{document.querySelectorAll('#fb [data-r]').forEach(b=>b.classList
   document.querySelectorAll('#fb [data-a]').forEach(b=>b.classList.toggle('on',COND.A.has(b.dataset.a)));
   $('#bor').classList.toggle('on',MODE==='or');$('#band').classList.toggle('on',MODE==='and');$('#binc').classList.toggle('on',INC)};
 (async()=>{U=await load();if(!U)return;
-  $('#fm').innerHTML='<option value="last">최종 진</option>'+[1,2,3,4].map(i=>`<option value="${i}">${i}진</option>`).join('');
+  $('#fm').innerHTML='<option value="last">최종 진화</option>'+[1,2,3,4].map(i=>`<option value="${i}">${i}진</option>`).join('');
   $('#st').innerHTML=SORTS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
   panel();
   $('#fm').onchange=e=>{FORM=e.target.value;R=U.map(mkrow);draw()};
