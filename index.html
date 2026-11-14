@@ -4,13 +4,13 @@
 <main id="main"></main>
 <script src="common.js"></script>
 <script>
-const TABS=[['티어표','tier.html'],['육성','growth.html'],['범용덱','deck.html'],['기타순위표','ranking.html'],['리뷰','review.html']];
+const TABS=[['티어표','tier.html'],['육성','growth.html'],['범용덱','deck.html'],['기타순위표','ranking.html'],['도감','units.html']];
 const pad=id=>String(id).padStart(3,'0');
 const card=u=>{const k=lastK(u),f=u.forms[k];return`<a class="c" href="unit.html?id=${u.id}"><div class="top"><div class="pt">${u.id}<img src="img/u/${u.id}/${k-1}.png" alt="" loading="lazy" onerror="this.remove()"></div><div><div class="nm">${esc(f.name)}</div><div class="id">#${pad(u.id)}</div></div></div></a>`};
 (async()=>{
   const q0=new URLSearchParams(location.search).get('q');
   if(q0===null){
-    $('#main').innerHTML=`<div class="hm"><div class="logo">냥코<span>연구소</span></div><form class="sf big" action="index.html"><input name="q" type="search" placeholder="유닛 이름 검색" autocomplete="off" autofocus></form><nav class="tabs2">${TABS.map(([l,h])=>`<a href="${h}">${l}</a>`).join('')}</nav></div>`;return}
+    $('#main').innerHTML=`<div class="hm"><div class="logo">냥코<span>연구소</span></div><form class="sf big" action="index.html"><input name="q" type="search" placeholder="유닛 이름 검색" autocomplete="off" autofocus></form><nav class="tb5">${TABS.map(([l,h])=>`<a href="${h}">${l}</a>`).join('')}</nav></div>`;return}
   document.body.insertAdjacentHTML('afterbegin',header(q0));
   $('#main').innerHTML='<p id="cnt">불러오는 중…</p><div id="grid"></div>';
   const U=await load();if(!U)return;
