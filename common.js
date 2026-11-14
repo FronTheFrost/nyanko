@@ -7,9 +7,9 @@ const lastK=u=>String(Math.max(...Object.keys(u.forms)));
 const sec=f=>f.attackCycleFrames/(f.fps||30);
 const mult=(L,c)=>{let p=100;for(let i=2;i<=L;i++)p+=+c[Math.min((i-1)/10|0,c.length-1)]||0;return p/100};
 const TREAS=2.5;
-function stats(f,b,p,G){const m=mult(b+p,f.levelCurve),sc=v=>Math.floor(Math.round(v*m)*TREAS+1e-9),
-  hits=(G?G.atk:f.rawAttacks).map(a=>a>0?sc(a):0),atk=hits.reduce((a,x)=>a+x,0),s=(G?G.cyc:f.attackCycleFrames)/(f.fps||30);
-  return{hp:sc(G?G.hp:f.rawHitpoints),hits,atk,dps:atk&&s?atk/s:0}}
+function stats(f,b,p,G,cb){const m=mult(b+p,f.levelCurve),sc=v=>Math.floor(Math.round(v*m)*TREAS+1e-9),
+  hits=(G?G.atk:f.rawAttacks).map(a=>a>0?Math.trunc(sc(a)*(100+(cb?.[0]||0))/100):0),atk=hits.reduce((a,x)=>a+x,0),s=(G?G.cyc:f.attackCycleFrames)/(f.fps||30);
+  return{hp:Math.trunc(sc(G?G.hp:f.rawHitpoints)*(100+(cb?.[1]||0))/100),hits,atk,dps:atk&&s?atk/s:0}}
 const abil=a=>{const x=Object.entries(a).filter(([k,v])=>AF[k]&&typeof v==='number'&&v>0).map(([k,v])=>AF[k](v));if(a.txt)x.push(a.txt);
   return`<b>${esc(a.label_ko)}</b>`+(x.length?` <i>${x.join(' · ')}</i>`:'')+(a.src?` <span class="tag r">${a.src==='ultra'?'초본능':'본능'}</span>`:'')};
 async function load(){try{const r=await fetch('data/units.json');if(!r.ok)throw 0;return await r.json()}
@@ -48,13 +48,22 @@ function derive(u,k,f,st){
     else if(TT[id]){if(!g.tr.includes(TT[id])){g.tr.push(TT[id]);g.trsrc[TT[id]]=s}}
     else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v)},s);
   }
+  const cb=st.CB||{};
+  if(cb[2])g.spd=Math.trunc(g.spd*2*(100+cb[2])/100)/2;
+  const cr0=get('critical');if(cb[24]&&cr0)cr0.chance+=cb[24];
+  const sg0=get('strengthen');if(cb[21]&&sg0)sg0.boost_percent+=cb[21];
+  if(cb[25]&&!get('villain_slayer'))up('villain_slayer','괴인 특효',{},'combo');
+  if(cb[26]&&!get('wave_immune'))up('wave_immune','파동 데미지 무효',{},'combo');
+  if(cb[28]&&!get('surge_immune'))up('surge_immune','열파 데미지 무효',{},'combo');
   return g
 }
-function mkctx(G,EN,strOn){
+function mkctx(G,EN,strOn,cb){cb=cb||{};
   const has=x=>G.ab.some(a=>a.key===x),A=x=>G.ab.find(a=>a.key===x),cr=A('critical'),sv=A('savage_blow'),st=A('strengthen');
   let m=1,r=1;const hit=G.tr.filter(t=>EN.has(t));
-  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3):has('strong')?(fr?1.8:1.5):1;r=has('insanely_tough')?(fr?1/7:1/6):has('resistant')?(fr?1/5:1/4):has('strong')?(fr?.4:.5):1}
-  for(const[e,[,key,x]]of Object.entries(SP))if(EN.has(e)&&has(key))m*=x;
+  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3):has('strong')?(fr?1.8:1.5):1;r=has('insanely_tough')?(fr?1/7:1/6):has('resistant')?(fr?1/5:1/4):has('strong')?(fr?.4:.5):1;
+    m*=has('insane_damage')?1:has('massive_damage')?(100+(cb[15]||0))/100:has('strong')?(100+(cb[14]||0))/100:1;
+    r*=has('insanely_tough')?1:has('resistant')?(100-(cb[16]||0))/100:has('strong')?(100-(cb[14]||0))/100:1}
+  for(const[e,[,key,x]]of Object.entries(SP))if(EN.has(e)&&has(key)){const q=e==='witch'?cb[22]||0:e==='eva'?cb[23]||0:0;m*=x*(100+q)/100;if(q)r*=(5-Math.trunc(q/100))/5}
   if(EN.has('sage')&&has('sage_slayer'))r*=A('sage_slayer').received_damage_multiplier??1;
   return{m,r,metal:EN.has('metal'),str:strOn&&st?1+st.boost_percent/100:1,cc:cr?cr.chance/100:0,sc:sv?sv.chance/100:0,sb:sv?sv.boost_percent/100:0}
 }
@@ -92,9 +101,9 @@ const SM={colossus_slayer:1.6,behemoth_slayer:2.5,witch_killer:5,eva_killer:5},D
 const rg=(v,f,d)=>{const lo=Math.min(...v),hi=Math.max(...v);return lo===hi?f(lo):d?f(hi)+'~'+f(lo):f(lo)+'~'+f(hi)},fx=(a,b,p)=>a+(b-a)*p/300;
 // 과실 보정: 대상 속성마다 과실 0(없음)~300(최대). 선택한 속성이 있으면 그 속성만, 없으면 유닛의 대응 속성 전체
 const FPof=(G,EN)=>{const R=EN.size?G.tr.filter(t=>EN.has(t)):G.tr;return R.length?R.map(t=>FR.includes(t)?300:0):[0]};
-function det(a,P){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,du=a.duration_frames??a.dodge_duration_frames;
+function det(a,P,cb){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chance,du=a.duration_frames??a.dodge_duration_frames;
   if(ch>0)x.push(`확률 ${ch}%`);
-  if(du>0)x.push((DUR.includes(a.key)?rg(P.map(p=>Math.floor(du*(1500+p)/1500)),v=>+(v/30).toFixed(1)):+(du/30).toFixed(1))+'초');
+  if(du>0)x.push((DUR.includes(a.key)?rg(P.map(p=>Math.trunc(Math.floor(du*(1500+p)/1500)*(100+((cb||{})[{slow:18,freeze:19,weaken:20}[a.key]]||0))/100)),v=>+(v/30).toFixed(1)):+(du/30).toFixed(1))+'초');
   if(MR[a.key])x.push(rg(P.map(p=>fx(MR[a.key][0],MR[a.key][1],p)),v=>+v.toFixed(2))+'배');
   else if(a.key==='resistant')x.push('받는 피해 '+rg(P.map(p=>fx(1/4,1/5,p)),v=>'1/'+Math.round(1/v),1));
   else if(a.key==='insanely_tough')x.push('받는 피해 '+rg(P.map(p=>fx(1/6,1/7,p)),v=>'1/'+Math.round(1/v),1));
@@ -113,9 +122,11 @@ function attachSuggest(inp){
   const wrap=inp.closest('.sf'),box=document.createElement('div');box.className='sg';box.hidden=true;wrap.appendChild(box);let k=0;
   inp.addEventListener('input',async()=>{const q=nz(inp.value),my=++k;if(!q){box.hidden=true;return}
     const U=await getU();if(my!==k)return;const L=[];
-    for(const u of U){const f=Object.values(u.forms).find(f=>nz(f.name).includes(q));if(f)L.push([u,f])}
-    box.innerHTML=L.slice(0,8).map(([u,f])=>`<a href="unit.html?id=${u.id}"><b>${esc(f.name)}</b><small>#${pad3(u.id)}</small></a>`).join('')+(L.length>8?`<a class="mo" href="index.html?q=${encodeURIComponent(inp.value)}">전체 ${L.length}건 보기</a>`:'')||'<div class="no">결과 없음</div>';
+    for(const u of U){const e=Object.entries(u.forms).find(([,f])=>nz(f.name).includes(q));if(e)L.push([u,e[1],e[0]])}
+    box.innerHTML=L.slice(0,8).map(([u,f,k])=>`<a href="unit.html?id=${u.id}&f=${k}"><div class="pt">${u.id}<img src="img/u/${u.id}/${k-1}.png" alt="" onerror="this.remove()"></div><b>${esc(f.name)}</b><small>#${pad3(u.id)}</small></a>`).join('')+(L.length>8?`<a class="mo" href="index.html?q=${encodeURIComponent(inp.value)}">전체 ${L.length}건 보기</a>`:'')||'<div class="no">결과 없음</div>';
     box.hidden=false});
   inp.addEventListener('focus',()=>{if(box.innerHTML&&inp.value)box.hidden=false});
   document.addEventListener('click',e=>{if(!wrap.contains(e.target))box.hidden=true});
 }
+const getC=()=>fetch('data/combos.json').then(r=>r.json()).catch(()=>[]);
+const cbTotals=(sel,list,uid)=>{const r={};for(const c of list)if(sel.has(c.id)&&(!c.x||c.x.includes(uid)))r[c.e]=(r[c.e]||0)+c.v;return r};
