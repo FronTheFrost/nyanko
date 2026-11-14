@@ -10,11 +10,11 @@ const card=u=>{const k=lastK(u),f=u.forms[k];return`<a class="c" href="unit.html
 (async()=>{
   const q0=new URLSearchParams(location.search).get('q');
   if(q0===null){
-    $('#main').innerHTML=`<div class="hm"><div class="logo">냥코<span>연구소</span></div><form class="sf big" action="index.html"><input name="q" type="search" placeholder="유닛 이름 검색" autocomplete="off" autofocus></form><nav class="tb5">${TABS.map(([l,h])=>`<a href="${h}">${l}</a>`).join('')}</nav></div>`;return}
+    $('#main').innerHTML=`<div class="hm"><div class="logo">냥코<span>연구소</span></div><form class="sf big" action="index.html"><input name="q" type="search" placeholder="유닛 이름 검색" autocomplete="off" autofocus></form><nav class="tb5">${TABS.map(([l,h])=>`<a href="${h}">${l}</a>`).join('')}</nav></div>`;attachSuggest($('.sf input'));return}
   document.body.insertAdjacentHTML('afterbegin',header(q0));
   $('#main').innerHTML='<p id="cnt">불러오는 중…</p><div id="grid"></div>';
   const U=await load();if(!U)return;
-  const show=q=>{q=q.trim().toLowerCase();const L=U.filter(u=>!q||String(u.id)===q||pad(u.id)===q||Object.values(u.forms).some(f=>f.name.toLowerCase().includes(q)));
+  const show=q=>{q=nz(q);const L=U.filter(u=>!q||String(u.id)===q||pad(u.id)===q||Object.values(u.forms).some(f=>nz(f.name).includes(q)));
     $('#cnt').textContent=`${L.length}종`;$('#grid').innerHTML=L.map(card).join('')};
   show(q0);
   $('.sf input').addEventListener('input',e=>{show(e.target.value);history.replaceState(null,'','?q='+encodeURIComponent(e.target.value))});
