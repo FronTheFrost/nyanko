@@ -15,11 +15,15 @@ const IMM=k=>/_immune$/.test(k),RES=k=>/^t(18|19|20|21|22|30|52|54)$/.test(k);
 
 const CBN={0:'공격력',1:'체력',2:'이동 속도',14:'엄청 강하다',15:'초 데미지',16:'맷집이 좋다',18:'느리게',19:'멈춤',20:'공격력 다운',21:'공격력 업',22:'마녀 킬러',23:'사도 킬러',24:'크리티컬',25:'괴인 특효',26:'파동 무효',28:'열파 무효'};
 const nameOf=m=>UM.get(m[0])?.forms[m[1]]?.name||'#'+m[0];
-const cbSum=()=>{const p=Object.entries(CBT).filter(([e])=>CBN[e]).map(([e,v])=>CBN[e]+([25,26,28].includes(+e)?' 부여':' +'+v+'%'));return p.length?'· '+p.join(' · '):''};
-const cbHtml=()=>`<details class="dt" id="dcb"${OP.cb?' open':''}><summary>냥콤보 <span id="cbs"></span></summary><div class="ctl"><input id="cbq" type="search" placeholder="콤보 검색" value="${esc(CBS.q)}"><select id="cbc">${[['in','이 캐릭터 포함'],['perf','캐릭터 성능'],['abil','특수 능력'],['all','전체']].map(([v,l])=>`<option value="${v}"${CBS.c===v?' selected':''}>${l}</option>`).join('')}</select></div><div id="cbl" class="cbl"></div></details>`;
-function cbRows(){const q=nz(CBS.q),cat=CBS.c;
-  return CBL.filter(c=>(!q||nz(c.n+c.t).includes(q))&&(cat==='all'||(cat==='in'&&c.m.some(m=>m[0]===u.id))||(cat==='perf'&&[0,1,2,27].includes(c.e))||(cat==='abil'&&c.e>=14&&c.e!==27))).map(c=>{const ok=!c.x||c.x.includes(u.id);
-    return`<label class="cbr${ok?'':' off'}"><input type="checkbox" data-c="${c.id}" ${CBSEL.has(c.id)?'checked':''} ${ok?'':'disabled'}><div><b>${esc(c.n)}</b> <i>${esc(c.t)}${[17,27].includes(c.e)?' · 수치 미반영':''}${c.r?' · '+esc(c.r):''}</i><div class="mm">${c.m.map(m=>`<span class="pt mi" title="${esc(nameOf(m))}">${m[0]}<img src="img/u/${m[0]}/${m[1]-1}.png" alt="" loading="lazy" onerror="this.remove()"></span>`).join('')}</div></div></label>`}).join('')||'<p class="note">해당하는 콤보가 없어요.</p>'}
+const cbSum=()=>{const p=Object.entries(CBT).filter(([e])=>CBN[e]).map(([e,v])=>CBN[e]+([25,26,28].includes(+e)?' 부여':' +'+v+'%'));return (CBSEL.size?'· 편성 '+cbUsed().size+'/5 ':'')+(p.length?'· '+p.join(' · '):'')};
+const cbHtml=()=>`<details class="dt" id="dcb"${OP.cb?' open':''}><summary>냥콤보 <span id="cbs"></span></summary><div class="ctl"><input id="cbq" type="search" placeholder="콤보 검색" value="${esc(CBS.q)}"><select id="cbc">${[['in','이 캐릭터 포함'],['perf','캐릭터 성능'],['abil','특수 능력'],['all','전체']].map(([v,l])=>`<option value="${v}"${CBS.c===v?' selected':''}>${l}</option>`).join('')}</select></div><div id="cbro"></div><div id="cbl" class="cbl"></div></details>`;
+const cbUsed=()=>{const m=new Map();for(const c of CBL)if(CBSEL.has(c.id))for(const[id,fm]of c.m)m.set(id,Math.max(m.get(id)||0,fm));return m};
+function cbRender(){const l=$('#cbl'),sc=l.scrollTop,m=[...cbUsed()];
+  $('#cbro').innerHTML=`<div class="ros">편성 ${m.length}/5 ${Array.from({length:5},(_,i)=>m[i]?`<span class="pt mi" title="${esc(nameOf(m[i]))}">${m[i][0]}<img src="img/u/${m[i][0]}/${m[i][1]-1}.png" alt="" onerror="this.remove()"></span>`:'<span class="pt mi emp"></span>').join('')}</div>`;
+  l.innerHTML=cbRows();l.scrollTop=sc}
+function cbRows(){const q=nz(CBS.q),cat=CBS.c,used=cbUsed();
+  return CBL.filter(c=>(!q||nz(c.n+c.t).includes(q))&&(cat==='all'||(cat==='in'&&c.m.some(m=>m[0]===u.id))||(cat==='perf'&&[0,1,2,27].includes(c.e))||(cat==='abil'&&c.e>=14&&c.e!==27))).map(c=>{const ok=!c.x||c.x.includes(u.id),full=!CBSEL.has(c.id)&&used.size+c.m.filter(m=>!used.has(m[0])).length>5;
+    return`<label class="cbr${ok&&!full?'':' off'}"><input type="checkbox" data-c="${c.id}" ${CBSEL.has(c.id)?'checked':''} ${ok&&!full?'':'disabled'}><div><b>${esc(c.n)}</b> <i>${esc(c.t)}${[17,27].includes(c.e)?' · 수치 미반영':''}${c.r?' · '+esc(c.r):''}${full?' · 5칸 초과':''}</i><div class="mm">${c.m.map(m=>`<span class="pt mi" title="${esc(nameOf(m))}">${m[0]}<img src="img/u/${m[0]}/${m[1]-1}.png" alt="" loading="lazy" onerror="this.remove()"></span>`).join('')}</div></div></label>`}).join('')||'<p class="note">해당하는 콤보가 없어요.</p>'}
 const aImg=(k,src)=>{if(TXT[k])return`<div class="pt tx${src?' '+src:''}">${TXT[k]}</div>`;const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
 const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
 const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
@@ -61,8 +65,8 @@ ${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" 
   $('#dd').oninput=e=>{D=+e.target.value||0;mark()};
   if($('#tn'))$('#tn').onchange=e=>{ST.TN=e.target.checked;update()};
   if($('#tu'))$('#tu').onchange=e=>{ST.TU=e.target.checked;update()};
-  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;$('#cbl').innerHTML=cbRows()};$('#cbc').onchange=e=>{CBS.c=e.target.value;$('#cbl').innerHTML=cbRows()};
-  $('#cbl').onchange=e=>{const c=e.target.dataset.c;if(c==null)return;e.target.checked?CBSEL.add(+c):CBSEL.delete(+c);update()};$('#cbl').innerHTML=cbRows();
+  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;cbRender()};$('#cbc').onchange=e=>{CBS.c=e.target.value;cbRender()};
+  $('#cbl').onchange=e=>{const c=e.target.dataset.c;if(c==null)return;e.target.checked?CBSEL.add(+c):CBSEL.delete(+c);cbRender();update()};cbRender();
   if($('#dtl'))$('#dtl').ontoggle=e=>OP.tl=e.target.open;$('#den').ontoggle=e=>OP.en=e.target.open;
   document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
   document.querySelectorAll('.tabs .tab').forEach(t=>t.onclick=()=>setForm(t.dataset.k,B,P));
