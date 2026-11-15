@@ -105,3 +105,4 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:rgba(255,138,43,.1)}tbody t
 .pt.combo{box-shadow:0 0 0 2px #4aa8ff,0 0 9px 1px rgba(74,168,255,.5)}
 .cbl{max-height:420px;overflow-y:auto;margin-top:8px}.cbr{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13px}.cbr.off{opacity:.4}
 .cbr input{margin-top:4px;flex:none}.cbr b{font-size:14px}.cbr i{color:var(--ac);font-style:normal}.mm{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.pt.mi{width:44px;height:34px;font-size:9px}
+.ros{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:13px;color:var(--mu)}.pt.emp{border:1px dashed var(--line);background:transparent}
