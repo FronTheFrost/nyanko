@@ -26,7 +26,7 @@ $('#cbd').onclick=e=>{if(e.target.id==='cbd'){$('#cbd').close();return}const b=e
 const CBN={0:'공격력',1:'체력',2:'이동 속도',14:'엄청 강하다',15:'초 데미지',16:'맷집이 좋다',18:'느리게',19:'멈춤',20:'공격력 다운',21:'공격력 업',22:'마녀 킬러',23:'사도 킬러',24:'크리티컬',25:'괴인 특효',26:'파동 무효',28:'열파 무효'};
 const nameOf=m=>UM.get(m[0])?.forms[m[1]]?.name||'#'+m[0];
 const cbSum=()=>{const p=Object.entries(CBT).filter(([e])=>CBN[e]).map(([e,v])=>CBN[e]+([25,26,28].includes(+e)?' 부여':' +'+v+'%'));return (CBSEL.size?'· 편성 '+cbUsed().size+'/5 ':'')+(p.length?'· '+p.join(' · '):'')};
-const cbHtml=()=>`<details class="dt" id="dcb"${OP.cb?' open':''}><summary>냥콤보 <span id="cbs"></span></summary><div class="ctl"><button id="cbf" class="tab">효과로 찾기</button><label><input type="checkbox" id="cbin" ${CBS.in?'checked':''}> 이 캐릭터 포함만</label><input id="cbq" type="search" placeholder="이름 검색" value="${esc(CBS.q)}"></div><div id="cbro"></div><div id="cbl" class="cbl"></div></details>`;
+const cbHtml=()=>`<details class="dt" id="dcb"${OP.cb?' open':''}><summary>냥콤보 <span id="cbs"></span></summary><div class="ctl"><button id="cbf" class="tab">효과로 찾기</button><button id="cbrs" class="tab">초기화</button><label><input type="checkbox" id="cbin" ${CBS.in?'checked':''}> 이 캐릭터 포함만</label><input id="cbq" type="search" placeholder="이름 검색" value="${esc(CBS.q)}"></div><div id="cbro"></div><div id="cbl" class="cbl"></div></details>`;
 const cbActive=()=>{const r=cbUsed();return new Set(CBL.filter(c=>c.m.length&&c.m.every(([id,fm])=>(r.get(id)||0)>=fm)).map(c=>c.id))};
 const cbUsed=()=>{const m=new Map();for(const c of CBL)if(CBSEL.has(c.id))for(const[id,fm]of c.m)m.set(id,Math.max(m.get(id)||0,fm));return m};
 function cbRender(){const l=$('#cbl'),sc=l.scrollTop,m=[...cbUsed()];
@@ -78,7 +78,7 @@ ${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" 
   $('#dd').oninput=e=>{D=+e.target.value||0;mark()};
   if($('#tn'))$('#tn').onchange=e=>{ST.TN=e.target.checked;update()};
   if($('#tu'))$('#tu').onchange=e=>{ST.TU=e.target.checked;update()};
-  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;cbRender()};$('#cbin').onchange=e=>{CBS.in=e.target.checked;cbRender()};$('#cbf').onclick=cbOpen;$('#cbro').onclick=e=>{const x=e.target.closest('[data-x]');if(x){CBS.e.delete(+x.dataset.x);cbRender()}};
+  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;cbRender()};$('#cbin').onchange=e=>{CBS.in=e.target.checked;cbRender()};$('#cbf').onclick=cbOpen;$('#cbrs').onclick=()=>{CBSEL.clear();cbRender();update()};$('#cbro').onclick=e=>{const x=e.target.closest('[data-x]');if(x){CBS.e.delete(+x.dataset.x);cbRender()}};
   $('#cbl').onchange=e=>{const c=e.target.dataset.c;if(c==null)return;e.target.checked?CBSEL.add(+c):CBSEL.delete(+c);cbRender();update()};cbRender();
   if($('#dtl'))$('#dtl').ontoggle=e=>OP.tl=e.target.open;$('#den').ontoggle=e=>OP.en=e.target.open;
   document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
