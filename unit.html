@@ -27,15 +27,16 @@ const CBN={0:'공격력',1:'체력',2:'이동 속도',14:'엄청 강하다',15:'
 const nameOf=m=>UM.get(m[0])?.forms[m[1]]?.name||'#'+m[0];
 const cbSum=()=>{const p=Object.entries(CBT).filter(([e])=>CBN[e]).map(([e,v])=>CBN[e]+([25,26,28].includes(+e)?' 부여':' +'+v+'%'));return (CBSEL.size?'· 편성 '+cbUsed().size+'/5 ':'')+(p.length?'· '+p.join(' · '):'')};
 const cbHtml=()=>`<details class="dt" id="dcb"${OP.cb?' open':''}><summary>냥콤보 <span id="cbs"></span></summary><div class="ctl"><button id="cbf" class="tab">효과로 찾기</button><label><input type="checkbox" id="cbin" ${CBS.in?'checked':''}> 이 캐릭터 포함만</label><input id="cbq" type="search" placeholder="이름 검색" value="${esc(CBS.q)}"></div><div id="cbro"></div><div id="cbl" class="cbl"></div></details>`;
+const cbActive=()=>{const r=cbUsed();return new Set(CBL.filter(c=>c.m.length&&c.m.every(([id,fm])=>(r.get(id)||0)>=fm)).map(c=>c.id))};
 const cbUsed=()=>{const m=new Map();for(const c of CBL)if(CBSEL.has(c.id))for(const[id,fm]of c.m)m.set(id,Math.max(m.get(id)||0,fm));return m};
 function cbRender(){const l=$('#cbl'),sc=l.scrollTop,m=[...cbUsed()];
-  const T=cbTotals(CBSEL,CBL,u.id),tot=Object.entries(T).sort((x,y)=>(ER[x[0]]??99)-(ER[y[0]]??99)).map(([e,v])=>(CBA[e]||'효과'+e)+' '+cbFmt(e,v)).join(' · ');
+  const T=cbTotals(cbActive(),CBL,u.id),tot=Object.entries(T).sort((x,y)=>(ER[x[0]]??99)-(ER[y[0]]??99)).map(([e,v])=>(CBA[e]||'효과'+e)+' '+cbFmt(e,v)).join(' · ');
   $('#cbro').innerHTML=`<div class="ros"><div class="rl">편성 ${m.length}/5</div><div class="rs">${Array.from({length:5},(_,i)=>m[i]?`<span class="pt" title="${esc(nameOf(m[i]))}">${m[i][0]}<img src="img/u/${m[i][0]}/${m[i][1]-1}.png" alt="" onerror="this.remove()"></span>`:'<span class="pt emp"></span>').join('')}</div>${tot?`<div class="rl">합계 ${tot}</div>`:''}</div>${CBS.e.size?`<div class="chips">${[...CBS.e].map(e=>`<button class="chip on" data-x="${e}">${CBA[e]} ✕</button>`).join('')}</div>`:''}`;
   $('#cbf').textContent='효과로 찾기'+(CBS.e.size?` (${CBS.e.size})`:'');
   l.innerHTML=cbRows();l.scrollTop=sc}
-function cbRows(){const q=nz(CBS.q),used=cbUsed();
-  return CBL.filter(c=>(!q||nz(c.n+c.t).includes(q))&&(!CBS.in||c.m.some(m=>m[0]===u.id))&&(!CBS.e.size||CBS.e.has(c.e))).sort((a,b)=>(ER[a.e]??99)-(ER[b.e]??99)||a.v-b.v||a.id-b.id).map(c=>{const ok=!c.x||c.x.includes(u.id),full=!CBSEL.has(c.id)&&used.size+c.m.filter(m=>!used.has(m[0])).length>5;
-    return`<label class="cbr${ok&&!full?'':' off'}"><input type="checkbox" data-c="${c.id}" ${CBSEL.has(c.id)?'checked':''} ${ok&&!full?'':'disabled'}><div><b>${esc(c.n)}</b> <i>${esc(c.t)}${[17,27,11].includes(c.e)?' · 수치 미반영':[3,4,5,6,7,9,10,12,13].includes(c.e)?' · 캐릭터 수치와 무관':''}${c.r?' · '+esc(c.r):''}${full?' · 5칸 초과':''}</i><div class="mm">${c.m.map(m=>`<span class="pt mi" title="${esc(nameOf(m))}">${m[0]}<img src="img/u/${m[0]}/${m[1]-1}.png" alt="" loading="lazy" onerror="this.remove()"></span>`).join('')}</div></div></label>`}).join('')||'<p class="note">해당하는 콤보가 없어요.</p>'}
+function cbRows(){const q=nz(CBS.q),used=cbUsed(),act=cbActive();
+  return CBL.filter(c=>(!q||nz(c.n+c.t).includes(q))&&(!CBS.in||c.m.some(m=>m[0]===u.id))&&(!CBS.e.size||CBS.e.has(c.e))).sort((a,b)=>(ER[a.e]??99)-(ER[b.e]??99)||a.v-b.v||a.id-b.id).map(c=>{const ok=!c.x||c.x.includes(u.id),auto=!CBSEL.has(c.id)&&act.has(c.id),full=!auto&&!CBSEL.has(c.id)&&used.size+c.m.filter(m=>!used.has(m[0])).length>5;
+    return`<label class="cbr${ok&&!full?'':' off'}"><input type="checkbox" data-c="${c.id}" ${CBSEL.has(c.id)||auto?'checked':''} ${ok&&!full&&!auto?'':'disabled'}><div><b>${esc(c.n)}</b> <i>${esc(c.t)}${[17,27,11].includes(c.e)?' · 수치 미반영':[3,4,5,6,7,9,10,12,13].includes(c.e)?' · 캐릭터 수치와 무관':''}${c.r?' · '+esc(c.r):''}${full?' · 5칸 초과':''}${auto?' · 편성으로 자동 발동':''}</i><div class="mm">${c.m.map(m=>`<span class="pt mi" title="${esc(nameOf(m))}">${m[0]}<img src="img/u/${m[0]}/${m[1]-1}.png" alt="" loading="lazy" onerror="this.remove()"></span>`).join('')}</div></div></label>`}).join('')||'<p class="note">해당하는 콤보가 없어요.</p>'}
 const aImg=(k,src)=>{if(TXT[k])return`<div class="pt tx${src?' '+src:''}">${TXT[k]}</div>`;const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
 const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
 const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
@@ -88,7 +89,7 @@ ${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" 
   update()
 }
 function update(){
-  CBT=cbTotals(CBSEL,CBL,u.id);ST.CB=CBT;G=derive(u,k,f,ST);const S=stats(f,B,P,G,CBT),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
+  CBT=cbTotals(cbActive(),CBL,u.id);ST.CB=CBT;G=derive(u,k,f,ST);const S=stats(f,B,P,G,CBT),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
   const c=mkctx(G,EN,STR,CBT),c0={...c,cc:0,sc:0},ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
   $('#bv').textContent=`${B} / ${mb}`;if(mp)$('#pv').textContent=`+${P} / ${mp}`;
   $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`;
