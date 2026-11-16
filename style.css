@@ -113,3 +113,10 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:rgba(255,138,43,.1)}tbody t
 .gt{color:#ffc400;font-weight:900;text-shadow:1px 1px 0 #000;font-size:13px;text-align:center}.gb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .eb{background:#6e6e6e;border:2px solid #333;border-radius:20px;color:#fff;font-weight:800;padding:8px 2px;font-size:12.5px;white-space:nowrap}.eb.on{background:#ffc400;color:#111;border-color:#a67c00}
 .cdf{display:flex;gap:10px;padding:10px 12px;background:#fff}.ok{flex:1;background:#ffc400;border:2px solid #a67c00;border-radius:20px;font-weight:900;font-size:19px;color:#111;padding:8px}
+.pt.orb{box-shadow:0 0 0 2px #b06cff,0 0 9px 1px rgba(176,108,255,.5)}
+.obs{display:flex;gap:12px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.obc .pt{width:64px;height:64px;border-radius:50%;font-size:22px;flex:none}.obc .pt.emp{border:1px dashed var(--mu);background:transparent}.obf{flex:1;min-width:0}
+.obt{display:flex;justify-content:space-between;align-items:baseline}.obm{font-size:12px;color:var(--mu)}
+.obg{display:grid;grid-template-columns:1fr;gap:6px;margin-top:6px}.obg label{font-size:12px;color:var(--mu);display:block}.obg select{width:100%;margin-top:2px}
+.obd{font-size:12px;color:var(--ac);margin-top:6px}.k18{display:block;margin-top:8px;font-size:13px}
+@media(min-width:560px){.obg{grid-template-columns:1fr 1fr}.obg label:last-child{grid-column:1/3}}
