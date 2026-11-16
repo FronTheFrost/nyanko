@@ -6,7 +6,7 @@
 <dialog id="cbd" class="cbd"></dialog>
 <script src="common.js"></script>
 <script>
-let OP={tl:0,en:0,cb:0},CBSEL=new Set(),CBL=[],CBT={},CBS={q:'',in:false,e:new Set()},UM=new Map(),U,u,k,f,G,B,P,D,STR=false,MODE='dps',EN=new Set(),FX={},ST={TN:false,TU:false,TL:{}},CH;
+let OP={tl:0,en:0,cb:0,ob:0},ORBC=null,ORBSEL=[null,null],K18=false,ORBN=[],ORBQ=[],CBSEL=new Set(),CBL=[],CBT={},CBS={q:'',in:false,e:new Set()},UM=new Map(),U,u,k,f,G,B,P,D,STR=false,MODE='dps',EN=new Set(),FX={},ST={TN:false,TU:false,TL:{}},CH;
 const BA=['red','floating','black','metal','angel','alien','zombie','relic','aku','traitless'],FRM=x=>`${(x/30).toFixed(2)}초`;
 const pad=id=>String(id).padStart(3,'0');
 const img=(src,t,fb)=>`<div class="pt">${t}<img src="${src}" ${fb?`data-f="${fb}" `:''}alt="" onerror="if(this.dataset.f){this.src=this.dataset.f;this.removeAttribute('data-f')}else this.remove()"></div>`;
@@ -37,13 +37,30 @@ function cbRender(){const l=$('#cbl'),sc=l.scrollTop,m=[...cbUsed()];
 function cbRows(){const q=nz(CBS.q),used=cbUsed(),act=cbActive();
   return CBL.filter(c=>(!q||nz(c.n+c.t).includes(q))&&(!CBS.in||c.m.some(m=>m[0]===u.id))&&(!CBS.e.size||CBS.e.has(c.e))).sort((a,b)=>(ER[a.e]??99)-(ER[b.e]??99)||a.v-b.v||a.id-b.id).map(c=>{const ok=!c.x||c.x.includes(u.id),auto=!CBSEL.has(c.id)&&act.has(c.id),full=!auto&&!CBSEL.has(c.id)&&used.size+c.m.filter(m=>!used.has(m[0])).length>5;
     return`<label class="cbr${ok&&!full?'':' off'}"><input type="checkbox" data-c="${c.id}" ${CBSEL.has(c.id)||auto?'checked':''} ${ok&&!full&&!auto?'':'disabled'}><div><b>${esc(c.n)}</b> <i>${esc(c.t)}${[17,27,11].includes(c.e)?' · 수치 미반영':[3,4,5,6,7,9,10,12,13].includes(c.e)?' · 캐릭터 수치와 무관':''}${c.r?' · '+esc(c.r):''}${full?' · 5칸 초과':''}${auto?' · 편성으로 자동 발동':''}</i><div class="mm">${c.m.map(m=>`<span class="pt mi" title="${esc(nameOf(m))}">${m[0]}<img src="img/u/${m[0]}/${m[1]-1}.png" alt="" loading="lazy" onerror="this.remove()"></span>`).join('')}</div></div></label>`}).join('')||'<p class="note">해당하는 콤보가 없어요.</p>'}
-const aImg=(k,src)=>{if(TXT[k])return`<div class="pt tx${src?' '+src:''}">${TXT[k]}</div>`;const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
+const orbTxt=r=>{const v=r.v,c=r.c;return c===0?`원래 공격력의 +${v[0]}%`:c===1?`받는 피해 −${v[0]}%`:c===2?`배율 +${v[0]/1000} · 받는 피해 −${v[1]}%`:c===3?`배율 +${+(v[0]/300).toFixed(2)}`:c===4?`받는 피해 −${v[0]}%`:c===10?`${v[0]/100}배 · 받는 피해 ${v[1]/100}배`:c===22?`코스트 −${v[0]}%`:c===18?`공격력 +${v[0]}%`:[6,8,12,14,15,20,21,23,25].includes(c)?`${v[0]}% 경감`:'수치 '+v.join('/')};
+const orbRecOf=s=>{if(!s||s.a==null||s.c==null||s.g==null||!ORBC)return null;const it=ORBC.items.find(i=>i[1]===s.c&&i[2]===s.a&&i[3]===s.g);return it?{id:it[0],c:s.c,a:ORBC.attributes.find(x=>x.id===s.a),con:ORBC.contents.find(x=>x.id===s.c),g:s.g,v:it[4]}:null};
+const orbKeyOk=(con,aid)=>!con.abilityKey||!G||(G.ab.some(x=>x.key===con.abilityKey)&&(t=>t.length&&t.every(x=>G.tr.includes(x)))(ORBC.attributes.find(x=>x.id===aid).traitKeys));
+function orbEquipped(){if(!ORBC||+k<3||!G)return[];const out=[],seen=new Set();
+  for(let i=0;i<orbSlots(u);i++){const r=orbRecOf(ORBSEL[i]);if(!r||!orbKeyOk(r.con,r.a.id))continue;if(r.con.stackable===false&&seen.has(r.c))continue;seen.add(r.c);out.push(r)}return out}
+const obHtml=()=>{if(!ORBC||+k<3||!orbSlots(u))return'';return`<details class="dt" id="dob"${OP.ob?' open':''}><summary>본능 구슬 <span id="obs"></span></summary><div class="ctl"><button id="obrs" class="tab">초기화</button></div><div id="obl"></div><p class="note">대항 속성을 고르면 데미지 업·경감 효과가 스펙에 반영돼요.</p></details>`};
+function obRender(){const el=$('#obl');if(!el||!ORBC)return;
+  el.innerHTML=Array.from({length:orbSlots(u)},(_,i)=>{const s=ORBSEL[i]||{},r=orbRecOf(s),ok=r&&orbKeyOk(r.con,r.a.id);
+    const cons=s.a==null?[]:ORBC.contents.filter(c=>ORBC.items.some(it=>it[2]===s.a&&it[1]===c.id)&&orbKeyOk(c,s.a)&&!(c.stackable===false&&ORBSEL.some((o,j)=>j!==i&&o&&o.c===c.id)));
+    return`<div class="obs" data-i="${i}"><div class="obc">${s.c!=null?img(`img/orb/c${s.c}.png`,'').replace('class="pt"','class="pt orb"'):'<div class="pt emp">+</div>'}</div><div class="obf"><div class="obt"><b>${i+1}번 슬롯</b><span class="obm">${r?(ok?'장착 중':'장착 불가'):'미장착'}</span></div>
+<div class="obg"><label>속성<select class="oa"><option value="">속성 선택</option>${ORBC.attributes.map(a=>`<option value="${a.id}"${s.a===a.id?' selected':''}>${esc(a.label)}</option>`).join('')}</select></label>
+<label>효과/능력<select class="oc"${s.a==null?' disabled':''}><option value="">효과/능력 선택</option>${cons.map(c=>`<option value="${c.id}"${s.c===c.id?' selected':''}>${esc(c.label)}</option>`).join('')}</select></label>
+<label>등급<select class="og"${s.c==null?' disabled':''}><option value="">등급 선택</option>${ORBC.grades.map(g=>`<option value="${g.id}"${s.g===g.id?' selected':''}>${g.label}</option>`).join('')}</select></label></div>
+${r?`<div class="obd">${esc(r.con.description.replace('%@',r.a.label))} · ${orbTxt(r)}</div>`:''}</div></div>`}).join('')+(ORBQ.some(r=>r.c===18)?`<label class="k18"><input type="checkbox" class="k18c"${K18?' checked':''}> 격파 시 공격력 업 발동</label>`:'')}
+function obChange(e){const t=e.target;if(t.classList.contains('k18c')){K18=t.checked;update();return}const sl=t.closest('.obs');if(!sl)return;
+  const i=+sl.dataset.i,s=ORBSEL[i]=ORBSEL[i]||{},v=t.value===''?null:+t.value;
+  if(t.classList.contains('oa')){s.a=v;s.c=null;s.g=null}else if(t.classList.contains('oc')){s.c=v;s.g=null}else if(t.classList.contains('og'))s.g=v;update()}
+const aImg=(k,src)=>{if(/^orb\d+$/.test(k))return img('img/orb/c'+k.slice(3)+'.png','구슬').replace('class="pt"','class="pt orb"');if(TXT[k])return`<div class="pt tx${src?' '+src:''}">${TXT[k]}</div>`;const p=ip(k);return img(p[0],k,p[1]).replace('class="pt"','class="pt'+(src?' '+src:'')+'"')};
 const TTID={red:33,floating:34,black:35,metal:36,angel:37,alien:38,zombie:39,relic:40,traitless:41,aku:57};
 const trI=t=>{const n=ICONID[TTID[t]],s=G.trsrc[t]||'';return`<div class="ib">${img(n?`img/i/${n}.png`:`img/trait/${t}.png`,TC[t]?TC[t][0]:'',n?`img/trait/${t}.png`:'').replace('class="pt"','class="pt'+(s?' '+s:'')+'"')}<small>${esc(TR[t]||t)}</small></div>`};
 const tIcon=t=>{const id=t.abilityId,k=TKEY[id]||TK[id]||'t'+id;return ICONID[id]?[`img/i/${ICONID[id]}.png`,`img/ability/${k}.png`]:ip(k)};
 const ip=k=>ICON[k]?[`img/i/${ICON[k]}.png`,`img/ability/${k}.png`]:[`img/ability/${k}.png`,''];
 $('#hd').innerHTML=header('');attachSuggest($('.sf input'));
-(async()=>{U=await load();if(!U)return;CBL=await getC();UM=new Map(U.map(x=>[x.id,x]));
+(async()=>{U=await load();if(!U)return;CBL=await getC();ORBC=await getO();UM=new Map(U.map(x=>[x.id,x]));
   const q=new URLSearchParams(location.search);u=U.find(x=>x.id==q.get('id'));
   if(!u){$('#cnt').textContent='없는 유닛이에요.';return}
   $('#cnt').remove();setForm(u.forms[q.get('f')]?q.get('f'):lastK(u),q.get('b'),q.get('p'))})().catch(e=>document.body.insertAdjacentHTML('afterbegin','<p style="color:#f66;padding:12px">오류: '+e.message+'</p>'));
@@ -65,7 +82,7 @@ function build(){
 ${mp?`<label>플러스 레벨 <b id="pv"></b><input type="range" id="ps" min="0" max="${mp}" value="${P}"></label>`:''}</div>
 ${tl.length?`<details class="dt" id="dtl"${OP.tl?' open':''}><summary>본능 <span id="tls"></span></summary><div class="ml"><label><input type="checkbox" id="tn" ${ST.TN?'checked':''}> 본능 적용</label>${hasU?`<label><input type="checkbox" id="tu" ${ST.TU?'checked':''}> 초본능 적용</label>`:''}</div>${tl.map(trow).join('')}</details>`:''}
 <details class="dt" id="den"${OP.en?' open':''}><summary>대항 속성 <span id="ens"></span></summary><div class="chips">${BA.map(tc).join('')}</div><div class="sub2">특수 속성</div><div class="chips">${Object.keys(SP).map(spc).join('')}</div></details>
-${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" id="c2"></div>
+${cbHtml()}${obHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" id="c2"></div>
 <div class="pn" id="dp" hidden><div class="fx" id="fx"></div>
 <div class="ctl"><button class="tab" data-m="dps">실질 DPS 기댓값</button><button class="tab" data-m="atk">공격력 기댓값</button>
 <label>사거리 <input type="number" id="dd" step="10" inputmode="numeric" value="${D}"></label></div>
@@ -78,7 +95,8 @@ ${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" 
   $('#dd').oninput=e=>{D=+e.target.value||0;mark()};
   if($('#tn'))$('#tn').onchange=e=>{ST.TN=e.target.checked;update()};
   if($('#tu'))$('#tu').onchange=e=>{ST.TU=e.target.checked;update()};
-  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;cbRender()};$('#cbin').onchange=e=>{CBS.in=e.target.checked;cbRender()};$('#cbf').onclick=cbOpen;$('#cbrs').onclick=()=>{CBSEL.clear();cbRender();update()};$('#cbro').onclick=e=>{const x=e.target.closest('[data-x]');if(x){CBS.e.delete(+x.dataset.x);cbRender()}};
+  $('#dcb').ontoggle=e=>OP.cb=e.target.open;$('#cbq').oninput=e=>{CBS.q=e.target.value;cbRender()};$('#cbin').onchange=e=>{CBS.in=e.target.checked;cbRender()};$('#cbf').onclick=cbOpen;$('#cbrs').onclick=()=>{CBSEL.clear();cbRender();update()};
+  if($('#dob')){$('#dob').ontoggle=e=>OP.ob=e.target.open;$('#obl').onchange=obChange;$('#obrs').onclick=()=>{ORBSEL=[null,null];K18=false;update()}}$('#cbro').onclick=e=>{const x=e.target.closest('[data-x]');if(x){CBS.e.delete(+x.dataset.x);cbRender()}};
   $('#cbl').onchange=e=>{const c=e.target.dataset.c;if(c==null)return;e.target.checked?CBSEL.add(+c):CBSEL.delete(+c);cbRender();update()};cbRender();
   if($('#dtl'))$('#dtl').ontoggle=e=>OP.tl=e.target.open;$('#den').ontoggle=e=>OP.en=e.target.open;
   document.querySelectorAll('.tr input').forEach(i=>i.oninput=()=>{ST.TL[i.closest('.tr').dataset.k]=+i.value;update()});
@@ -89,18 +107,19 @@ ${cbHtml()}<div class="g"><div class="kv big" id="c1"></div><div class="kv big" 
   update()
 }
 function update(){
-  CBT=cbTotals(cbActive(),CBL,u.id);ST.CB=CBT;G=derive(u,k,f,ST);const S=stats(f,B,P,G,CBT),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
-  const c=mkctx(G,EN,STR,CBT),c0={...c,cc:0,sc:0},ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
+  CBT=cbTotals(cbActive(),CBL,u.id);ST.CB=CBT;G=derive(u,k,f,ST);ORBQ=orbEquipped();ORBN=ORBQ.filter(r=>!(r.c===18&&!K18));for(const r of ORBQ)if(r.c>4)G.ab.push({key:'orb'+r.c,label_ko:r.con.label,src:'orb',txt:orbTxt(r)});
+  const S=stats(f,B,P,G,CBT),mb=f.maxBaseLevel||1,mp=f.maxPlusLevel||0,A=x=>G.ab.find(a=>a.key===x),fp=f.fps||30;
+  const c=mkctx(G,EN,STR,CBT,ORBN),c0={...c,cc:0,sc:0},ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
   $('#bv').textContent=`${B} / ${mb}`;if(mp)$('#pv').textContent=`+${P} / ${mp}`;
   $('#tg').innerHTML=`<span class="tag r">${esc(f.rarity)}</span>`;
   // 공격력 칸: 스위치로 켠 확률 효과는 '발동했다고 가정'
   const cr=A('critical'),sv=A('savage_blow'),sb=sv?sv.boost_percent/100:0;
   const shown=S.hits.map((h,i)=>{if(!h)return 0;const a=ap(i+1),crit=FX.critical&&cr&&a;
-    return c.metal&&!crit?1:Math.round(h*c.m*c.str*(crit?2:1)*(FX.savage_blow&&sv&&a?1+sb:1))}).filter(x=>x>0);
+    return c.metal&&!crit?1:Math.round(h*c.m*c.str*(crit?2:1)*(FX.savage_blow&&sv&&a?1+sb:1))+(c.oadd[i]||0)}).filter(x=>x>0);
   const extra=[];for(const[key,m,nm]of[['wave',1,'파동'],['mini_wave',.2,'소파동'],['surge',1,'열파'],['mini_surge',.2,'소열파'],['explosion',1,'폭파']])
     if(FX[key]&&A(key)){const a=A(key),lv=/surge/.test(key)?(a.level||1):1;
       extra.push(`${nm} +${n(S.hits.reduce((s,h,i)=>s+(h&&ap(i+1)?(c.metal&&!(FX.critical&&cr)?1:h*c.m*c.str*m*(FX.critical&&cr?2:1)*(FX.savage_blow&&sv?1+sb:1)):0),0)*lv)}`)}
-  const nom=S.hits.reduce((s,h)=>s+(h?ehit(h,0,0,c0):0),0)/(G.cyc/fp);
+  const nom=S.hits.reduce((s,h,i)=>s+(h?ehit(h,0,0,c0,c0.oadd[i]):0),0)/(G.cyc/fp);
   const md=x=>G.mod[x]?` mod-${G.mod[x]}`:'',rg=f.actualRanges.map(r=>`${f.actualRanges.length>1?r.hit+'타 ':''}${r.minimum}~${r.maximum}`);
   const ed=c.r<1;
   $('#c1').innerHTML=`<small>${ed?'실질 체력':'체력'}</small><b class="${md('hp').trim()}">${n(S.hp/c.r)}</b>${ed?`<div class="sub">체력 ${n(S.hp)} · 받는 피해 1/${+(1/c.r).toFixed(1)}</div>`:''}<div class="sub">히트백 ${f.knockbacks}회</div>`;
@@ -109,7 +128,7 @@ ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra
   $('#tgl').onclick=()=>{$('#dp').hidden=!$('#dp').hidden;$('#tgl').textContent=$('#dp').hidden?'▾':'▴'};
   const kv=(l,v,s)=>`<div class="kv"><small>${l}</small><b>${v}</b>${s?`<div class="sub">${s}</div>`:''}</div>`,fs=f.foreswingFrames||[];
   $('#gx').innerHTML=kv('공격 주기',FRM(G.cyc),`선딜 ${fs.map(FRM).join(' / ')} · 후딜 ${FRM(G.bk)} · 공격 간격 ${FRM(G.tba)}`)
-   +kv('쿨타임',FRM(G.cd))+kv('인식 사거리',f.recognitionRange,`타격 범위<br>${rg.join('<br>')}`)+kv('이동속도',G.spd)+kv('코스트',n(G.cost));
+   +kv('쿨타임',FRM(G.cd))+kv('인식 사거리',f.recognitionRange,`타격 범위<br>${rg.join('<br>')}`)+kv('이동속도',G.spd)+kv('코스트',n(G.cost),ORBQ.find(r=>r.c===22)?`구슬 할인 시 ${n(Math.floor(G.cost*(100-ORBQ.find(r=>r.c===22).v[0])/100+1e-9))}`:'');
   const fxs=[['critical','크리티컬'],['savage_blow','혼신의 일격'],['wave','파동'],['mini_wave','소파동'],['surge','열파'],['mini_surge','소열파'],['explosion','폭파']].filter(([x])=>A(x));
   const st=A('strengthen');
   $('#fx').innerHTML=fxs.map(([x,l])=>`<label><input type="checkbox" data-fx="${x}" ${FX[x]?'checked':''}> ${l}</label>`).join('')+(st?`<label><input type="checkbox" data-fx="STR" ${STR?'checked':''}> 공격력 업 (체력 ${st.threshold_percent}% 이하)</label>`:'');
@@ -125,6 +144,8 @@ ${shown.length>1?`<div class="sub">${shown.map(n).join(' + ')}</div>`:''}${extra
   if($('#tls'))$('#tls').textContent=ST.TN||ST.TU?'· '+[ST.TN&&'본능',ST.TU&&'초본능'].filter(Boolean).join('+')+' 적용':'';
   $('#ens').textContent=EN.size?'· '+[...EN].map(x=>TR[x]||SP[x][0]).join(', '):'';
   $('#chart').innerHTML=chart(S,c);mark();
+  if($('#obs'))$('#obs').textContent=ORBQ.length?`· ${ORBQ.length}개 장착`:'';
+  obRender();
   history.replaceState(null,'',`?id=${u.id}&f=${k}&b=${B}&p=${P}`)
 }
 function chart(S,c){
