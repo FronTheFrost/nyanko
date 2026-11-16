@@ -57,19 +57,22 @@ function derive(u,k,f,st){
   if(cb[28]&&!get('surge_immune'))up('surge_immune','열파 데미지 무효',{},'combo');
   return g
 }
-function mkctx(G,EN,strOn,cb){cb=cb||{};
+function mkctx(G,EN,strOn,cb,orb){cb=cb||{};orb=orb||[];
   const has=x=>G.ab.some(a=>a.key===x),A=x=>G.ab.find(a=>a.key===x),cr=A('critical'),sv=A('savage_blow'),st=A('strengthen');
-  let m=1,r=1;const hit=G.tr.filter(t=>EN.has(t));
-  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3):has('strong')?(fr?1.8:1.5):1;r=has('insanely_tough')?(fr?1/7:1/6):has('resistant')?(fr?1/5:1/4):has('strong')?(fr?.4:.5):1;
+  let m=1,r=1;const hit=G.tr.filter(t=>EN.has(t)),hs=new Set(hit);
+  const oSum=(cid,vi,ks)=>orb.filter(o=>o.c===cid&&o.a.traitKeys.some(t=>ks.has(t))).reduce((s,o)=>s+(o.v[vi]||0),0),opct=oSum(0,0,EN),ored=oSum(1,0,EN),o10=orb.find(o=>o.c===10),o18=orb.find(o=>o.c===18);
+  if(hit.length){const fr=hit.some(t=>FR.includes(t));m*=has('insane_damage')?(fr?6:5):has('massive_damage')?(fr?4:3)+oSum(3,0,hs)/300:has('strong')?(fr?1.8:1.5)+oSum(2,0,hs)/1000:1;r=has('insanely_tough')?(fr?1/7:1/6):has('resistant')?(fr?1/5:1/4):has('strong')?(fr?.4:.5):1;
     m*=has('insane_damage')?1:has('massive_damage')?(100+(cb[15]||0))/100:has('strong')?(100+(cb[14]||0))/100:1;
-    r*=has('insanely_tough')?1:has('resistant')?(100-(cb[16]||0))/100:has('strong')?(100-(cb[14]||0))/100:1}
-  for(const[e,[,key,x]]of Object.entries(SP))if(EN.has(e)&&has(key)){const q=e==='witch'?cb[22]||0:e==='eva'?cb[23]||0:0;m*=x*(100+q)/100;if(q)r*=(5-Math.trunc(q/100))/5}
+    r*=has('insanely_tough')?1:has('resistant')?(100-(cb[16]||0))/100:has('strong')?(100-(cb[14]||0))/100:1;
+    r*=has('insanely_tough')?1:has('resistant')?(100-oSum(4,0,hs))/100:has('strong')?(100-oSum(2,1,hs))/100:1}
+  r*=Math.max(0,100-ored)/100;if(EN.has('colossus')&&o10){m*=o10.v[0]/100;r*=o10.v[1]/100}
+  for(const[e,[,key,x]]of Object.entries(SP))if(EN.has(e)&&has(key)&&!(e==='colossus'&&o10)){const q=e==='witch'?cb[22]||0:e==='eva'?cb[23]||0:0;m*=x*(100+q)/100;if(q)r*=(5-Math.trunc(q/100))/5}
   if(EN.has('sage')&&has('sage_slayer'))r*=A('sage_slayer').received_damage_multiplier??1;
-  return{m,r,metal:EN.has('metal'),str:strOn&&st?1+st.boost_percent/100:1,cc:cr?cr.chance/100:0,sc:sv?sv.chance/100:0,sb:sv?sv.boost_percent/100:0}
+  return{m,r,metal:EN.has('metal'),str:(strOn&&st?1+st.boost_percent/100:1)*(o18?1+o18.v[0]/100:1),oadd:G.atk.map(a=>a>0?Math.floor(a*opct/100+1e-9):0),cc:cr?cr.chance/100:0,sc:sv?sv.chance/100:0,sb:sv?sv.boost_percent/100:0}
 }
-function ehit(att,ap,adj,c){
-  const b=att*c.m*c.str,norm=c.metal?1:b*(adj&&ap?1+c.sc*c.sb:1);
-  return adj&&ap&&c.cc?(1-c.cc)*norm+c.cc*b*2*(1+c.sc*c.sb):norm
+function ehit(att,ap,adj,c,add){add=add||0;
+  const b=att*c.m*c.str,norm=c.metal?1:b*(adj&&ap?1+c.sc*c.sb:1)+add;
+  return adj&&ap&&c.cc?(1-c.cc)*norm+c.cc*(b*2*(1+c.sc*c.sb)+add):norm
 }
 function rangeX(f,G){let x=Math.max(1,...f.actualRanges.map(r=>r.maximum));
   for(const a of G.ab){if(/wave$/.test(a.key))x=Math.max(x,332.5+200*((a.level||1)-1));if(/surge$/.test(a.key))x=Math.max(x,a.anchor+a.span+125);
@@ -81,16 +84,16 @@ function rangeMin(f,G){let x=Math.min(0,...f.actualRanges.map(r=>r.minimum));
   return Math.floor(x)}
 function dps(f,G,S,d,adj,c){
   const A=x=>G.ab.find(a=>a.key===x),ah=A('multi_hit')?.ability_hits||null,ap=h=>!ah||ah.includes(h);
-  let t=0;for(const r of f.actualRanges)if(d>=r.minimum&&d<=r.maximum)t+=ehit(S.hits[r.hit-1]||0,ap(r.hit),adj,c);
-  if(adj)S.hits.forEach((h,i)=>{if(!h||!ap(i+1))return;
-    for(const[key,m]of[['wave',1],['mini_wave',.2]]){const a=A(key);if(a&&d>-67.5&&d<=332.5+200*((a.level||1)-1))t+=ehit(h*m,1,1,c)*a.chance/100}
+  let t=0;for(const r of f.actualRanges)if(d>=r.minimum&&d<=r.maximum)t+=ehit(S.hits[r.hit-1]||0,ap(r.hit),adj,c,(c.oadd||[])[r.hit-1]||0);
+  if(adj)S.hits.forEach((h,i)=>{if(!h||!ap(i+1))return;const ad=(c.oadd||[])[i]||0;
+    for(const[key,m]of[['wave',1],['mini_wave',.2]]){const a=A(key);if(a&&d>-67.5&&d<=332.5+200*((a.level||1)-1))t+=ehit(h*m,1,1,c,ad)*a.chance/100}
     for(const[key,m]of[['surge',1],['mini_surge',.2]]){const a=A(key);if(!a)continue;
       const lo=a.anchor,hi=lo+a.span,cnt=Math.max(1,Math.round(a.span*4)),pos=a.span>0?Math.max(0,Math.min(hi,d+250)-Math.max(lo,d-125))*4:(lo>=d-125&&lo<d+250?1:0);
-      t+=ehit(h*m,1,1,c)*(a.chance/100)*(a.level||1)*pos/cnt}
+      t+=ehit(h*m,1,1,c,ad)*(a.chance/100)*(a.level||1)*pos/cnt}
     const x=A('explosion');if(x){const lo=x.anchor,hi=lo+x.span,cnt=Math.max(1,Math.round(x.span*4)),bw=x.band_widths,e0=bw[0]/2,e1=e0+bw[1],e2=e1+bw[2],ov=(a,b)=>Math.max(0,Math.min(hi,b)-Math.max(lo,a));let w;
       if(x.span>0)w=[ov(d-e0,d+e0),ov(d-e1,d-e0)+ov(d+e0,d+e1),ov(d-e2,d-e1)+ov(d+e1,d+e2)].map(v=>v*4);
       else{const q=Math.abs(d-lo);w=[q<=e0?1:0,q>e0&&q<=e1?1:0,q>e1&&q<=e2?1:0]}
-      w.forEach((n2,j)=>{if(n2)t+=ehit(h*x.damage_bands_percent[j]/100,1,1,c)*(x.chance/100)*n2/cnt})}});
+      w.forEach((n2,j)=>{if(n2)t+=ehit(h*x.damage_bands_percent[j]/100,1,1,c,ad)*(x.chance/100)*n2/cnt})}});
   return t/(G.cyc/(f.fps||30))
 }
 
@@ -130,3 +133,5 @@ function attachSuggest(inp){
 }
 const getC=()=>fetch('data/combos.json').then(r=>r.json()).catch(()=>[]);
 const cbTotals=(sel,list,uid)=>{const r={};for(const c of list)if(sel.has(c.id)&&(!c.x||c.x.includes(uid)))r[c.e]=(r[c.e]||0)+c.v;return r};
+const getO=()=>fetch('data/orbs.json').then(r=>r.json()).catch(()=>null);
+const orbSlots=u=>u.orbs?u.orbs.slotCount:((u.talents||[]).some(t=>t.kind==='ultra')?2:(u.talents||[]).length?1:0);
