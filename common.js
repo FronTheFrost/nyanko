@@ -46,7 +46,7 @@ function derive(u,k,f,st){
     else if(id===64)up('behemoth_slayer',t.label,{dodge_chance:v[0],dodge_duration_frames:v[1]},s);
     else if([8,11,15,58].includes(id)){const key=TK[id];up(key,t.label,{chance:(get(key)?.chance||0)+v[0]},s)}
     else if(TT[id]){if(!g.tr.includes(TT[id])){g.tr.push(TT[id]);g.trsrc[TT[id]]=s}}
-    else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v)},s);
+    else up(TK[id]||'t'+id,t.label,{txt:tfmt(id,v),pct:[18,19,20,21,22,30,52,54].includes(id)?v[0]:undefined},s);
   }
   const cb=st.CB||{};
   if(cb[2])g.spd=Math.trunc(g.spd*2*(100+cb[2])/100)/2;
@@ -114,7 +114,7 @@ function det(a,P,cb){if(a.txt)return a.txt;const x=[],ch=a.chance??a.dodge_chanc
   if(a.level>0&&/wave|surge/.test(a.key))x.push(`Lv.${a.level}`);
   if(/surge|explosion/.test(a.key)&&a.anchor!=null)x.push('생성 '+(a.span>0?`${a.anchor}~${a.anchor+a.span}`:a.anchor));return x.join(' · ')}
 const header=q=>`<header><div class="bar"><a class="brand" href="index.html">냥코<span>연구소</span></a><form class="sf" action="index.html"><input name="q" type="search" value="${esc(q||'')}" placeholder="유닛 이름 검색" autocomplete="off"></form></div></header>`;
-const TXT={multi_hit:'연',boss_wave_immune:'보',limited_attacks:'1'};
+const TXT={multi_hit:'연',boss_wave_immune:'보',limited_attacks:'1',texp:'폭'};
 const SPID={colossus:324,behemoth:325,sage:326,villain:384,witch:327,eva:328};
 
 const nz=s=>String(s).toLowerCase().replace(/\s+/g,''),pad3=id=>String(id).padStart(3,'0');
